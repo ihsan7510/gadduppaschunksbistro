@@ -6,52 +6,72 @@
 <div class="form-page">
     <a href="{% url 'admin_panel:billing_list' %}" class="btn-back"><i class="bi bi-arrow-left"></i> Back</a>
     <div class="receipt-preview">
-        <div class="receipt-card">
-            <div class="receipt-header">
-                <h2>{{ settings.restaurant_name }}</h2>
-                {% if settings.address %}<p>{{ settings.address }}</p>{% endif %}
-                {% if settings.phone %}<p>📞 {{ settings.phone }}</p>{% endif %}
-                {% if settings.gstin %}<p>GSTIN: {{ settings.gstin }}</p>{% endif %}
+        <div class="receipt-card" style="background: #fff; color: #111; font-family: monospace; font-size: 0.85rem; padding: 20px; border-radius: 8px; box-shadow: var(--shadow-lg); width: 100%; max-width: 340px; margin: 0 auto;">
+            <div class="receipt-header" style="text-align: center; margin-bottom: 12px;">
+                <h2 style="font-size: 1.25rem; font-weight: 800; margin: 0;">{{ settings.restaurant_name }}</h2>
+                {% if settings.address %}<p style="margin: 2px 0; font-size: 0.8rem; color: #333;">{{ settings.address }}</p>{% endif %}
+                {% if settings.phone %}<p style="margin: 2px 0; font-size: 0.8rem; color: #333;">Phone: {{ settings.phone }}</p>{% endif %}
             </div>
-            <div class="receipt-divider">- - - - - - - - - - - - - - - - - -</div>
-            <div class="receipt-info">
-                <div><strong>Order:</strong> #{{ bill.order.order_number }}</div>
-                <div><strong>Table:</strong> {{ bill.order.table.number }}</div>
-                <div><strong>Date:</strong> {{ bill.created_at|date:"d M Y, h:i A" }}</div>
-                {% if bill.order.waiter %}<div><strong>Waiter:</strong> {{ bill.order.waiter.name }}</div>{% endif %}
+            <div class="receipt-divider" style="text-align: center; color: #666; margin: 6px 0;">- - - - - - - - - - - - - - - - - -</div>
+            <div class="receipt-header" style="text-align: center; margin-bottom: 10px;">
+                <h3 style="font-size: 0.95rem; font-weight: bold; margin: 0; text-transform: uppercase; color: #111;">Bill of Supply</h3>
             </div>
-            <div class="receipt-divider">- - - - - - - - - - - - - - - - - -</div>
-            <table class="receipt-items">
-                <thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead>
+            <div class="receipt-info" style="font-size: 0.8rem; line-height: 1.4;">
+                <div style="display: flex; justify-content: space-between;"><span>Cash</span></div>
+                <div style="display: flex; justify-content: space-between; margin-top: 4px;"><span></span><span>Date:</span></div>
+                <div style="display: flex; justify-content: space-between;"><span></span><span>{{ bill.created_at|date:"d/m/Y" }}</span></div>
+                <div style="display: flex; justify-content: space-between;"><span></span><span>Time: {{ bill.created_at|date:"g:i a" }}</span></div>
+                <div style="display: flex; justify-content: space-between; margin-top: 4px;"><span>Invoice no:</span></div>
+                <div style="display: flex; justify-content: space-between;"><span></span><span>{{ bill.pk }}</span></div>
+            </div>
+            <div class="receipt-divider" style="text-align: center; color: #666; margin: 6px 0;">- - - - - - - - - - - - - - - - - -</div>
+            <table class="receipt-items" style="width: 100%; font-size: 0.8rem; border-collapse: collapse;">
+                <thead>
+                    <tr style="border-bottom: 1px dashed #666;">
+                        <th style="text-align: left; padding: 4px 0; font-weight: bold; color: #111;">Item Name</th>
+                        <th style="text-align: right; padding: 4px 0; font-weight: bold; color: #111;">Price</th>
+                        <th style="text-align: right; padding: 4px 0; font-weight: bold; color: #111;">Amount</th>
+                    </tr>
+                    <tr>
+                        <th colspan="3" style="text-align: left; padding: 2px 0 4px 0; font-weight: bold; color: #111;">Qty</th>
+                    </tr>
+                </thead>
                 <tbody>
                     {% for item in bill.order.items.all %}
                     <tr>
-                        <td>
-                            {{ item.menu_item.name }}
-                            {% if item.notes %}<br><small class="text-muted">Note: {{ item.notes }}</small>{% endif %}
-                        </td>
-                        <td>{{ item.quantity }}</td>
-                        <td>₹{{ item.price }}</td>
-                        <td>₹{{ item.subtotal }}</td>
+                        <td style="padding: 2px 0; text-align: left; vertical-align: top; color: #111;">{{ item.menu_item.name }}</td>
+                        <td style="padding: 2px 0; text-align: right; vertical-align: top; color: #111;">{{ item.price|floatformat:2 }}</td>
+                        <td style="padding: 2px 0; text-align: right; vertical-align: top; color: #111;">{{ item.subtotal|floatformat:2 }}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px dashed #eee;">
+                        <td colspan="3" style="padding: 0 0 4px 0; text-align: left; font-size: 0.75rem; color: #444;">x{{ item.quantity }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
-            <div class="receipt-divider">- - - - - - - - - - - - - - - - - -</div>
-            <div class="receipt-totals">
-                <div><span>Subtotal</span><span>₹{{ bill.subtotal }}</span></div>
-                <div><span>Tax ({{ bill.tax_percent }}%)</span><span>₹{{ bill.tax_amount }}</span></div>
-                {% if bill.discount_percent > 0 %}
-                <div class="discount-row"><span>Discount ({{ bill.discount_percent }}%)</span><span>-₹{{ bill.discount_amount }}</span></div>
-                {% endif %}
-                <div class="total-row"><span>TOTAL</span><span>₹{{ bill.total }}</span></div>
+            <div class="receipt-divider" style="text-align: center; color: #666; margin: 6px 0;">- - - - - - - - - - - - - - - - - -</div>
+            <div class="receipt-totals" style="font-size: 0.85rem; line-height: 1.5;">
+                <div style="display: flex; justify-content: space-between;"><span>Subtotal</span><span>: {{ bill.subtotal|floatformat:2 }}</span></div>
+                <div style="display: flex; justify-content: space-between; font-weight: bold; border-top: 1px solid #111; padding-top: 4px; margin-top: 4px;"><span>Total</span><span>: {{ bill.total|floatformat:2 }}</span></div>
             </div>
-            <div class="receipt-divider">- - - - - - - - - - - - - - - - - -</div>
-            <div class="receipt-payment">
-                Payment: <strong>{{ bill.get_payment_method_display }}</strong>
-                {% if bill.is_paid %}<span class="badge-active">PAID</span>{% else %}<span class="badge-warning">UNPAID</span>{% endif %}
+            
+            <div class="qr-code-section" style="text-align: center; margin: 15px 0 5px 0;">
+                <div style="display: inline-block; background: #fff; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=merchant@upi%26pn={{ settings.restaurant_name|urlencode }}%26am={{ bill.total }}%26cu=INR" alt="QR Code" style="width: 130px; height: 130px; display: block;" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'130\' height=\'130\' viewBox=\'0 0 100 100\'><rect width=\'100\' height=\'100\' fill=\'%23f0f0f0\'/><rect x=\'10\' y=\'10\' width=\'25\' height=\'25\' fill=\'%23111\'/><rect x=\'65\' y=\'10\' width=\'25\' height=\'25\' fill=\'%23111\'/><rect x=\'10\' y=\'65\' width=\'25\' height=\'25\' fill=\'%23111\'/><rect x=\'40\' y=\'40\' width=\'20\' height=\'20\' fill=\'%23111\'/></svg>'">
+                </div>
+                <p style="margin: 6px 0 0 0; font-size: 0.75rem; color: #444; font-weight: bold;">Scan this QR code to pay</p>
             </div>
-            <div class="receipt-footer">{{ settings.footer_message }}</div>
+            
+            <div class="receipt-divider" style="text-align: center; color: #666; margin: 6px 0;">- - - - - - - - - - - - - - - - - -</div>
+            <div class="receipt-payment" style="margin-top: 8px; display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem;">
+                <span>Payment: <strong>{{ bill.get_payment_method_display }}</strong></span>
+                {% if bill.is_paid %}<span class="badge-active" style="background: rgba(16,185,129,0.15); color: var(--accent-green); padding: 2px 8px; border-radius: 4px;">PAID</span>{% else %}<span class="badge-warning" style="background: rgba(245,158,11,0.15); color: var(--accent-orange); padding: 2px 8px; border-radius: 4px;">UNPAID</span>{% endif %}
+            </div>
+            <div class="receipt-divider" style="text-align: center; color: #666; margin: 6px 0;">- - - - - - - - - - - - - - - - - -</div>
+            <div class="receipt-footer" style="text-align: center; font-size: 0.75rem; line-height: 1.3; color: #333;">
+                <strong style="display: block; margin-bottom: 2px;">Terms & Conditions</strong>
+                {{ settings.footer_message|linebreaksbr }}
+            </div>
         </div>
         <div class="receipt-actions">
             <a href="{% url 'admin_panel:bill_print' bill.pk %}" class="btn-primary"><i class="bi bi-printer"></i> Print Bill</a>
