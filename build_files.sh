@@ -1,6 +1,13 @@
 #!/bin/bash
+echo "Creating virtual environment..."
+python3 -m venv venv
+source venv/bin/activate
+
 echo "Installing dependencies..."
-python3 -m pip install -r requirements.txt
+pip install -r requirements.txt
 
 echo "Collecting static files..."
 python3 manage.py collectstatic --no-input --clear
+
+echo "Deactivating virtual environment..."
+deactivate
