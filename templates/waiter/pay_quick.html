@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Collect Payment — Table {{ bill.order.table.number }}{% endblock %}
+{% block title %}Collect Payment — {{ bill.order.table.display_name }}{% endblock %}
 
 {% block body %}
 <div class="waiter-layout">
@@ -7,7 +7,7 @@
         <a href="{% url 'waiter:tables' %}" class="btn-back-header"><i class="bi bi-arrow-left"></i></a>
         <div class="waiter-brand">
             <i class="bi bi-cash-coin"></i>
-            Collect Payment — Table {{ bill.order.table.number }}
+            Collect Payment — {{ bill.order.table.display_name }}
         </div>
         <button class="theme-toggle-btn py-1 px-2 me-2" onclick="toggleTheme()" title="Toggle Light/Dark Mode" style="font-size: 0.95rem; height: 32px;">
             <i id="themeToggleIcon" class="bi bi-moon-stars-fill"></i>
@@ -21,7 +21,7 @@
         <div class="pay-quick-summary">
             <div class="pq-header">
                 <div class="pq-order-num">#{{ bill.order.order_number }}</div>
-                <div class="pq-table">Table {{ bill.order.table.number }}</div>
+                <div class="pq-table">{{ bill.order.table.display_name }}</div>
             </div>
 
             <div class="pq-items">

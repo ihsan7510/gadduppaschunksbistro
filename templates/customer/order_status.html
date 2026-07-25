@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+{% block title %}Order Status — {{ settings.restaurant_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background-color: var(--bg-primary, #121214);
+        color: var(--text-primary, #f3f4f6);
+        padding-bottom: 40px;
+    }
+    .status-header {
+        background: linear-gradient(135deg, #11998e, #38ef7d);
+        color: #fff;
+        padding: 24px 16px;
+        border-bottom-left-radius: 24px;
+        border-bottom-right-radius: 24px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+    .table-badge {
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 0.95rem;
+    }
+    .status-card {
+        background: var(--bg-card, #1e1e24);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 20px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .status-timeline {
+        position: relative;
+        padding-left: 24px;
+        border-left: 2px dashed rgba(255, 255, 255, 0.1);
+        margin: 15px 0;
+    }
+    .status-dot {
+        position: absolute;
+        left: -7px;
+        top: 4px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: #38ef7d;
+        box-shadow: 0 0 10px #38ef7d;
+    }
+    .badge-status {
+        font-weight: 700;
+        font-size: 0.8rem;
+        padding: 4px 10px;
+        border-radius: 12px;
+        text-transform: uppercase;
+    }
+    .badge-pending { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+    .badge-confirmed { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+    .badge-preparing { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
+    .badge-ready { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+    .badge-served { background: rgba(75, 85, 99, 0.15); color: #9ca3af; }
+    .badge-billed { background: rgba(236, 72, 153, 0.15); color: #ec4899; }
+    .badge-cancelled { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+
+    .btn-order-more {
+        background: var(--bg-card, #1e1e24);
+        color: var(--text-primary, #f3f4f6);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 14px;
+        padding: 12px 24px;
+        font-weight: 600;
+        width: 100%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+    }
+    .btn-order-more:active {
+        transform: scale(0.98);
+        background: #FF4B2B;
+        color: #fff;
+        border-color: #FF4B2B;
+    }
+    .reload-indicator {
+        font-size: 0.75rem;
+        color: var(--text-muted, #9ca3af);
+        text-align: center;
+        margin-top: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<!-- Header -->
+<div class="status-header d-flex justify-content-between align-items-center">
+    <div>
+        <h4 class="mb-1 font-outfit fw-bold">Live Order Status</h4>
+        <span class="text-white-50"><i class="bi bi-patch-check"></i> Connected to Kitchen</span>
+    </div>
+    <div class="table-badge">
+        Table {{ table.number }}
+    </div>
+</div>
+
+<div class="container px-3 mt-4">
+    {% if messages %}
+    <div class="messages-container mb-3">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} border-0 rounded-3 py-2 text-center small mb-2">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% for order in active_orders %}
+    <div class="status-card">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <span class="text-muted small d-block">Order Number</span>
+                <strong class="text-white">#{{ order.order_number }}</strong>
+            </div>
+            <div>
+                {% if order.status == 'pending' %}
+                    <span class="badge-status badge-pending">Sent</span>
+                {% elif order.status == 'confirmed' %}
+                    <span class="badge-status badge-confirmed">Confirmed</span>
+                {% elif order.status == 'preparing' %}
+                    <span class="badge-status badge-preparing">Cooking</span>
+                {% elif order.status == 'ready' %}
+                    <span class="badge-status badge-ready">Ready</span>
+                {% elif order.status == 'served' %}
+                    <span class="badge-status badge-served">Served</span>
+                {% elif order.status == 'billed' %}
+                    <span class="badge-status badge-billed">Billed</span>
+                {% else %}
+                    <span class="badge-status badge-cancelled">{{ order.status }}</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="status-timeline">
+            <div class="status-dot"></div>
+            {% if order.status == 'pending' or order.status == 'confirmed' %}
+                <span class="fw-bold text-white small">Order Received</span>
+                <p class="text-muted small mb-0">The kitchen will accept and start preparing your food shortly.</p>
+            {% elif order.status == 'preparing' %}
+                <span class="fw-bold text-warning small">Preparing food</span>
+                <p class="text-muted small mb-0">Our chef is preparing your dishes with care.</p>
+            {% elif order.status == 'ready' %}
+                <span class="fw-bold text-success small">Food is ready!</span>
+                <p class="text-muted small mb-0">Your food is ready to serve. A waiter will bring it to your table now.</p>
+            {% elif order.status == 'served' %}
+                <span class="fw-bold text-white-50 small">Order Served</span>
+                <p class="text-muted small mb-0">Enjoy your meal! Let us know if you need anything else.</p>
+            {% elif order.status == 'billed' %}
+                <span class="fw-bold text-white-50 small">Bill Generated</span>
+                <p class="text-muted small mb-0">Please pay at the cashier counter or via your waiter.</p>
+            {% endif %}
+        </div>
+
+        <hr style="border-color: rgba(255,255,255,0.05)">
+
+        <div class="order-items-list mb-3">
+            <span class="text-muted small d-block mb-2">Order Summary</span>
+            {% for item in order.items.all %}
+            <div class="d-flex justify-content-between align-items-center small mb-2 text-white-50">
+                <span>{{ item.quantity }}x {{ item.menu_item.name }}</span>
+                <span>₹{{ item.subtotal }}</span>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center pt-2 border-top border-secondary-subtle">
+            <span class="text-muted small">Total</span>
+            <strong class="text-warning fs-5">₹{{ order.total_amount }}</strong>
+        </div>
+    </div>
+    {% empty %}
+    <div class="text-center py-5">
+        <i class="bi bi-emoji-smile" style="font-size: 3rem; color: var(--text-muted);"></i>
+        <h5 class="mt-3">No active orders yet</h5>
+        <p class="text-muted small">Scan the QR code and add items to place your first order.</p>
+    </div>
+    {% endfor %}
+
+    <div class="mt-4">
+        <a href="{% url 'customer:table_order' table.number %}" class="btn-order-more">
+            <i class="bi bi-plus-circle"></i> Order More Food
+        </a>
+    </div>
+
+    <div class="reload-indicator" id="reloadIndicator">
+        Auto-refreshing in <span id="timerSec">10</span>s...
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    let secondsLeft = 10;
+    const timerEl = document.getElementById('timerSec');
+    
+    const interval = setInterval(() => {
+        secondsLeft--;
+        if (timerEl) {
+            timerEl.textContent = secondsLeft;
+        }
+        if (secondsLeft <= 0) {
+            clearInterval(interval);
+            location.reload();
+        }
+    }, 1000);
+</script>
+{% endblock %}
+{% endblock %}

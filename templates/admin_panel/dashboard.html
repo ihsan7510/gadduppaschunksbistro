@@ -3,6 +3,12 @@
 {% block header_title %}Dashboard{% endblock %}
 
 {% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="font-outfit fw-bold m-0" style="color: var(--text-primary);">Overview</h3>
+    <a href="{% url 'waiter:create_parcel_order' %}" class="btn btn-primary font-outfit" style="background-color: var(--accent-orange, #ff6b35); border: none; font-weight: 600; padding: 10px 20px; border-radius: 10px; font-size: 0.95rem; text-decoration: none; color: white; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(255, 107, 53, 0.2);">
+        <i class="bi bi-plus-circle-fill"></i> New Delivery / Takeaway Order
+    </a>
+</div>
 <!-- Stats Grid -->
 <div class="stats-grid">
     <div class="stat-card green">
@@ -97,7 +103,7 @@
                 {% for order in recent_orders %}
                 <tr>
                     <td><strong>#{{ order.order_number }}</strong></td>
-                    <td>Table {{ order.table.number }}</td>
+                    <td>{{ order.table.display_name }}</td>
                     <td>{{ order.waiter.name|default:"—" }}</td>
                     <td><span class="badge status-{{ order.status }}">{{ order.get_status_display }}</span></td>
                     <td>{{ order.created_at|date:"h:i A" }}</td>
@@ -123,8 +129,8 @@ new Chart(ctx, {
         datasets: [{
             label: 'Revenue (₹)',
             data: {{ weekly_data|safe }},
-            backgroundColor: 'rgba(99, 102, 241, 0.6)',
-            borderColor: 'rgba(99, 102, 241, 1)',
+            backgroundColor: 'rgba(169, 15, 26, 0.6)',
+            borderColor: 'rgba(169, 15, 26, 1)',
             borderWidth: 2,
             borderRadius: 8,
         }]

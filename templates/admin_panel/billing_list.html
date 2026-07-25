@@ -33,7 +33,7 @@
                 <tr>
                     <td>#{{ bill.pk }}</td>
                     <td>#{{ bill.order.order_number }}</td>
-                    <td>T-{{ bill.order.table.number }}</td>
+                    <td>{% if bill.order.table.is_parcel %}P-{{ bill.order.table.number }}{% else %}T-{{ bill.order.table.number }}{% endif %}</td>
                     <td>{{ bill.created_at|date:"d M h:i A" }}</td>
                     <td>₹{{ bill.subtotal }}</td>
                     <td>₹{{ bill.tax_amount }}</td>

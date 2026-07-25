@@ -16,7 +16,7 @@
         <div class="kitchen-order-card completed-card">
             <div class="kitchen-card-header">
                 <div class="kitchen-order-info">
-                    <span class="kitchen-table-num">T-{{ order.table.number }}</span>
+                    <span class="kitchen-table-num">{% if order.table.is_parcel %}P-{{ order.table.number }}{% else %}T-{{ order.table.number }}{% endif %}</span>
                     <span class="kitchen-order-num">#{{ order.order_number }}</span>
                 </div>
                 <span class="kitchen-status-badge served">{{ order.get_status_display }}</span>

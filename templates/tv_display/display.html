@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Order Status — {{ settings.restaurant_name }}</title>
     <script>
         // Apply saved theme early to prevent flash
-        const savedTheme = localStorage.getItem('theme') || 'dark';
+        const savedTheme = localStorage.getItem('theme') || 'light';
         document.documentElement.setAttribute('data-theme', savedTheme);
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -59,7 +59,7 @@
                 {% for order in preparing %}
                 <div class="tv-order-card cooking" id="tv-order-{{ order.pk }}">
                     <div class="tv-order-num">#{{ order.order_number }}</div>
-                    <div class="tv-table-num">Table {{ order.table.number }}</div>
+                    <div class="tv-table-num">{{ order.table.display_name }}</div>
                     <div class="tv-items">
                         {% for item in order.items.all %}
                         <span class="tv-item {% if item.status == 'ready' %}item-done{% endif %}">
@@ -93,7 +93,7 @@
                 {% for order in ready %}
                 <div class="tv-order-card ready" id="tv-order-{{ order.pk }}">
                     <div class="tv-order-num">#{{ order.order_number }}</div>
-                    <div class="tv-table-num">Table {{ order.table.number }}</div>
+                    <div class="tv-table-num">{{ order.table.display_name }}</div>
                     <div class="tv-items">
                         {% for item in order.items.all %}
                         <span class="tv-item">{{ item.menu_item.name }}{% if item.quantity > 1 %} ×{{ item.quantity }}{% endif %}</span>
@@ -121,7 +121,7 @@
 
     // Theme Toggle logic
     function toggleTheme() {
-        const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
         const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
         document.documentElement.setAttribute('data-theme', newTheme);
         localStorage.setItem('theme', newTheme);
@@ -136,7 +136,7 @@
     document.addEventListener('DOMContentLoaded', () => {
         const icon = document.getElementById('themeToggleIcon');
         if (icon) {
-            const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
             icon.className = currentTheme === 'dark' ? 'bi bi-moon-stars-fill' : 'bi bi-sun-fill';
         }
     });

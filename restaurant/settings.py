@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     'waiter',
     'kitchen',
     'tv_display',
+    'customer',
 ]
 
 MIDDLEWARE = [

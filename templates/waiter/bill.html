@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
-{% block title %}Bill — Table {{ order.table.number }} — {{ settings.restaurant_name }}{% endblock %}
+{% block title %}Bill — {{ order.table.display_name }} — {{ settings.restaurant_name }}{% endblock %}
 
 {% block body %}
 <div class="waiter-layout">
     <header class="waiter-header">
         <a href="{% url 'waiter:order_detail' order.pk %}" class="btn-back-header"><i class="bi bi-arrow-left"></i></a>
-        <div class="waiter-brand">Bill — Table {{ order.table.number }}</div>
+        <div class="waiter-brand">Bill — {{ order.table.display_name }}</div>
         <button class="theme-toggle-btn py-1 px-2" onclick="toggleTheme()" title="Toggle Light/Dark Mode" style="font-size: 0.95rem; height: 32px;">
             <i id="themeToggleIcon" class="bi bi-moon-stars-fill"></i>
         </button>

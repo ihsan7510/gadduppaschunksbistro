@@ -24,7 +24,7 @@
         <div class="kitchen-order-card status-{{ order.status }}" id="order-{{ order.pk }}">
             <div class="kitchen-card-header">
                 <div class="kitchen-order-info">
-                    <span class="kitchen-table-num">T-{{ order.table.number }}</span>
+                    <span class="kitchen-table-num">{% if order.table.is_parcel %}P-{{ order.table.number }}{% else %}T-{{ order.table.number }}{% endif %}</span>
                     <span class="kitchen-order-num">#{{ order.order_number }}</span>
                 </div>
                 <div class="kitchen-card-meta">

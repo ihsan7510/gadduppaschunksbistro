@@ -21,6 +21,9 @@
                 <i class="bi bi-calendar-check-fill"></i><span>Attendance</span>
             </a>
             <div class="nav-section">Operations</div>
+            <a href="{% url 'waiter:create_parcel_order' %}" class="nav-item">
+                <i class="bi bi-plus-circle-fill" style="color: var(--accent-orange, #ff6b35);"></i><span>New Order (Delivery)</span>
+            </a>
             <a href="{% url 'admin_panel:table_list' %}" class="nav-item {% if 'table' in request.resolver_match.url_name %}active{% endif %}">
                 <i class="bi bi-grid-3x3-gap-fill"></i><span>Tables</span>
             </a>

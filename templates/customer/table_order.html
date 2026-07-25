@@ -1,0 +1,457 @@
+{% extends 'base.html' %}
+{% block title %}Order Online — {{ settings.restaurant_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background-color: var(--bg-primary, #121214);
+        color: var(--text-primary, #f3f4f6);
+        padding-bottom: 90px;
+    }
+    .customer-header {
+        background: linear-gradient(135deg, #FF4B2B, #FF416C);
+        color: #fff;
+        padding: 24px 16px;
+        border-bottom-left-radius: 24px;
+        border-bottom-right-radius: 24px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+    .table-badge {
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 0.95rem;
+        letter-spacing: 0.5px;
+    }
+    .search-container {
+        margin-top: -20px;
+        padding: 0 16px;
+    }
+    .search-input {
+        background: var(--bg-card, #1e1e24);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: var(--text-primary, #f3f4f6);
+        border-radius: 16px;
+        padding: 14px 20px;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+    .search-input:focus {
+        background: var(--bg-card, #1e1e24);
+        border-color: #FF4B2B;
+        color: var(--text-primary, #f3f4f6);
+        box-shadow: 0 8px 24px rgba(255, 75, 43, 0.2);
+        outline: none;
+    }
+    .category-scroll {
+        display: flex;
+        overflow-x: auto;
+        padding: 16px;
+        gap: 12px;
+        scrollbar-width: none;
+    }
+    .category-scroll::-webkit-scrollbar {
+        display: none;
+    }
+    .category-btn {
+        background: var(--bg-card, #1e1e24);
+        color: var(--text-muted, #9ca3af);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        padding: 10px 20px;
+        border-radius: 14px;
+        white-space: nowrap;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+    .category-btn.active {
+        background: #FF4B2B;
+        color: #fff;
+        border-color: #FF4B2B;
+        box-shadow: 0 4px 12px rgba(255, 75, 43, 0.3);
+    }
+    .menu-item-card {
+        background: var(--bg-card, #1e1e24);
+        border-radius: 20px;
+        border: 1px solid rgba(255,255,255,0.05);
+        overflow: hidden;
+        margin-bottom: 16px;
+        display: flex;
+        padding: 12px;
+        gap: 12px;
+        transition: transform 0.2s ease;
+    }
+    .menu-item-card:active {
+        transform: scale(0.98);
+    }
+    .menu-item-image {
+        width: 100px;
+        height: 100px;
+        border-radius: 14px;
+        object-fit: cover;
+        background: #2a2a35;
+    }
+    .menu-item-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    .veg-badge {
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 2px 6px;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        width: fit-content;
+    }
+    .badge-veg {
+        border: 1px solid #10b981;
+        color: #10b981;
+    }
+    .badge-nonveg {
+        border: 1px solid #ef4444;
+        color: #ef4444;
+    }
+    .qty-selector {
+        display: flex;
+        align-items: center;
+        background: rgba(255, 75, 43, 0.1);
+        border-radius: 12px;
+        padding: 4px;
+    }
+    .qty-btn {
+        background: #FF4B2B;
+        color: #fff;
+        border: none;
+        width: 32px;
+        height: 32px;
+        border-radius: 10px;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .qty-btn:active {
+        opacity: 0.8;
+    }
+    .qty-count {
+        min-width: 32px;
+        text-align: center;
+        font-weight: 700;
+        color: var(--text-primary, #f3f4f6);
+    }
+    .add-to-cart-btn {
+        background: #FF4B2B;
+        color: #fff;
+        border: none;
+        padding: 6px 16px;
+        border-radius: 12px;
+        font-weight: 600;
+    }
+    .floating-cart {
+        position: fixed;
+        bottom: 24px;
+        left: 16px;
+        right: 16px;
+        background: linear-gradient(135deg, #FF4B2B, #FF416C);
+        color: #fff;
+        border-radius: 20px;
+        padding: 16px 20px;
+        box-shadow: 0 10px 30px rgba(255, 75, 43, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        z-index: 1000;
+        cursor: pointer;
+        transition: transform 0.2s ease;
+    }
+    .floating-cart:active {
+        transform: scale(0.98);
+    }
+    .cart-drawer {
+        border-top-left-radius: 24px;
+        border-top-right-radius: 24px;
+        background: var(--bg-primary, #121214) !important;
+        color: var(--text-primary, #f3f4f6);
+    }
+    .cart-item-row {
+        padding: 12px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .btn-place-order {
+        background: linear-gradient(135deg, #FF4B2B, #FF416C);
+        color: #fff;
+        border: none;
+        border-radius: 16px;
+        padding: 16px;
+        font-weight: 700;
+        width: 100%;
+        box-shadow: 0 8px 24px rgba(255, 75, 43, 0.3);
+    }
+    .btn-place-order:active {
+        opacity: 0.9;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<!-- Header -->
+<div class="customer-header d-flex justify-content-between align-items-center">
+    <div>
+        <h4 class="mb-1 font-outfit fw-bold">{{ settings.restaurant_name }}</h4>
+        <span class="text-white-50"><i class="bi bi-geo-alt"></i> Ashokapuram, Calicut</span>
+    </div>
+    <div class="table-badge">
+        Table {{ table.number }}
+    </div>
+</div>
+
+<!-- Search Bar -->
+<div class="search-container">
+    <input type="text" id="searchInput" class="form-control search-input" placeholder="Search delicious dishes..." onkeyup="filterMenu()">
+</div>
+
+<!-- Categories Scrolling -->
+<div class="category-scroll">
+    <button class="category-btn active" onclick="selectCategory('all', this)">All Items</button>
+    {% for category in categories %}
+    <button class="category-btn" onclick="selectCategory('cat-{{ category.pk }}', this)">
+        {{ category.icon }} {{ category.name }}
+    </button>
+    {% endfor %}
+</div>
+
+<!-- Menu Items Container -->
+<div class="container px-3 mt-2">
+    <div class="row" id="menuContainer">
+        {% for category in categories %}
+            {% for item in category.items.all %}
+                <div class="col-12 menu-item-element cat-{{ category.pk }}" data-name="{{ item.name|lower }}" data-description="{{ item.description|lower }}">
+                    <div class="menu-item-card">
+                        {% if item.image %}
+                        <img src="{{ item.image.url }}" alt="{{ item.name }}" class="menu-item-image">
+                        {% else %}
+                        <div class="menu-item-image d-flex align-items-center justify-content-center">
+                            <span style="font-size: 2rem;">🍽️</span>
+                        </div>
+                        {% endif %}
+                        <div class="menu-item-info">
+                            <div>
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    {% if item.is_veg %}
+                                    <span class="veg-badge badge-veg"><i class="bi bi-circle-fill" style="font-size:0.5rem"></i> Veg</span>
+                                    {% else %}
+                                    <span class="veg-badge badge-nonveg"><i class="bi bi-triangle-fill" style="font-size:0.5rem"></i> Non-Veg</span>
+                                    {% endif %}
+                                </div>
+                                <h6 class="mb-1 fw-bold text-white">{{ item.name }}</h6>
+                                <p class="text-muted small mb-2 text-truncate-2">{{ item.description }}</p>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-bold text-warning" style="font-size: 1.1rem;">₹{{ item.price }}</span>
+                                <div class="action-container" id="action-{{ item.pk }}">
+                                    <button class="add-to-cart-btn" onclick="addToCart('{{ item.pk }}', '{{ item.name }}', {{ item.price }})">ADD</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Active Order Prompt -->
+{% if active_order %}
+<div class="container px-3 mt-3">
+    <div class="alert alert-warning border-0 rounded-4 d-flex justify-content-between align-items-center py-3">
+        <div>
+            <h6 class="mb-1 fw-bold text-dark"><i class="bi bi-clock-history"></i> Current Active Session</h6>
+            <p class="mb-0 text-dark-50 small">You have order #{{ active_order.order_number }} preparing.</p>
+        </div>
+        <a href="{% url 'customer:order_status' %}" class="btn btn-dark btn-sm rounded-3">View Status</a>
+    </div>
+</div>
+{% endif %}
+
+<!-- Floating Cart Footer -->
+<div class="floating-cart" id="floatingCart" style="display: none;" data-bs-toggle="offcanvas" data-bs-target="#cartOffcanvas">
+    <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-bag-fill" style="font-size: 1.3rem;"></i>
+        <div>
+            <span class="fw-bold" id="cartItemCount">0 Items</span>
+            <span class="text-white-50 mx-1">|</span>
+            <span class="fw-bold text-warning" id="cartTotal">₹0.00</span>
+        </div>
+    </div>
+    <div class="d-flex align-items-center gap-1">
+        <span>View Cart</span>
+        <i class="bi bi-chevron-right"></i>
+    </div>
+</div>
+
+<!-- Offcanvas Cart Drawer -->
+<div class="offcanvas offcanvas-bottom cart-drawer h-75" tabindex="-1" id="cartOffcanvas" aria-labelledby="cartOffcanvasLabel">
+    <div class="offcanvas-header border-bottom border-secondary-subtle">
+        <h5 class="offcanvas-title font-outfit fw-bold" id="cartOffcanvasLabel"><i class="bi bi-cart3 text-warning"></i> Checkout Cart</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <div id="cartItemsContainer">
+            <!-- Dynamic Cart Items -->
+        </div>
+
+        <!-- Order Note -->
+        <form method="post" action="{% url 'customer:place_order' %}" id="orderForm" class="mt-4">
+            {% csrf_token %}
+            <!-- Hidden inputs will be appended here via Javascript -->
+            <div class="mb-4">
+                <label class="form-label small text-muted">Special Cooking Instructions</label>
+                <textarea class="form-control bg-dark text-white border-secondary" name="order_notes" rows="2" placeholder="e.g. Less spicy, make it hot, no onion..."></textarea>
+            </div>
+            
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <span class="text-muted">Subtotal</span>
+                <span class="fw-bold fs-5 text-white" id="drawerSubtotal">₹0.00</span>
+            </div>
+
+            <button type="submit" class="btn-place-order">
+                <span class="fw-bold">Place Order & Send to Kitchen</span>
+            </button>
+        </form>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    let cart = {};
+
+    function selectCategory(catClass, btn) {
+        document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        document.querySelectorAll('.menu-item-element').forEach(el => {
+            if (catClass === 'all' || el.classList.contains(catClass)) {
+                el.style.display = 'block';
+            } else {
+                el.style.display = 'none';
+            }
+        });
+    }
+
+    function filterMenu() {
+        const query = document.getElementById('searchInput').value.toLowerCase().trim();
+        document.querySelectorAll('.menu-item-element').forEach(el => {
+            const name = el.getAttribute('data-name');
+            const desc = el.getAttribute('data-description');
+            if (name.includes(query) || desc.includes(query)) {
+                el.style.display = 'block';
+            } else {
+                el.style.display = 'none';
+            }
+        });
+    }
+
+    function addToCart(pk, name, price) {
+        if (!cart[pk]) {
+            cart[pk] = { name: name, price: price, qty: 1 };
+        } else {
+            cart[pk].qty += 1;
+        }
+        updateCartUI();
+    }
+
+    function changeQty(pk, delta) {
+        if (!cart[pk]) return;
+        cart[pk].qty += delta;
+        if (cart[pk].qty <= 0) {
+            delete cart[pk];
+        }
+        updateCartUI();
+    }
+
+    function updateCartUI() {
+        let totalItems = 0;
+        let totalPrice = 0;
+
+        // Reset selectors
+        document.querySelectorAll('.action-container').forEach(el => {
+            const pk = el.id.replace('action-', '');
+            if (cart[pk]) {
+                el.innerHTML = `
+                    <div class="qty-selector">
+                        <button class="qty-btn" onclick="changeQty('${pk}', -1)">-</button>
+                        <span class="qty-count">${cart[pk].qty}</span>
+                        <button class="qty-btn" onclick="changeQty('${pk}', 1)">+</button>
+                    </div>
+                `;
+            } else {
+                const name = el.closest('.menu-item-card').querySelector('h6').textContent;
+                const price = parseFloat(el.closest('.menu-item-card').querySelector('.text-warning').textContent.replace('₹', ''));
+                el.innerHTML = `<button class="add-to-cart-btn" onclick="addToCart('${pk}', '${name}', ${price})">ADD</button>`;
+            }
+        });
+
+        // Re-compile HTML templates for the drawer
+        const drawerContainer = document.getElementById('cartItemsContainer');
+        drawerContainer.innerHTML = '';
+
+        // Clear existing hidden inputs in form
+        const form = document.getElementById('orderForm');
+        form.querySelectorAll('input.cart-hidden-input').forEach(el => el.remove());
+
+        for (const pk in cart) {
+            const item = cart[pk];
+            totalItems += item.qty;
+            totalPrice += item.price * item.qty;
+
+            // Append item row in drawer
+            const row = document.createElement('div');
+            row.className = 'cart-item-row d-flex justify-content-between align-items-center';
+            row.innerHTML = `
+                <div>
+                    <h6 class="mb-0 fw-bold text-white">${item.name}</h6>
+                    <small class="text-warning">₹${item.price} each</small>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="text-white-50">₹${(item.price * item.qty).toFixed(2)}</span>
+                    <div class="qty-selector">
+                        <button class="qty-btn" onclick="changeQty('${pk}', -1)">-</button>
+                        <span class="qty-count">${item.qty}</span>
+                        <button class="qty-btn" onclick="changeQty('${pk}', 1)">+</button>
+                    </div>
+                </div>
+            `;
+            drawerContainer.appendChild(row);
+
+            // Create hidden inputs for POST submit
+            const inputQty = document.createElement('input');
+            inputQty.type = 'hidden';
+            inputQty.className = 'cart-hidden-input';
+            inputQty.name = `qty_${pk}`;
+            inputQty.value = item.qty;
+            form.appendChild(inputQty);
+        }
+
+        // Show/hide floating button
+        const floatingCart = document.getElementById('floatingCart');
+        if (totalItems > 0) {
+            floatingCart.style.display = 'flex';
+            document.getElementById('cartItemCount').textContent = `${totalItems} Item${totalItems > 1 ? 's' : ''}`;
+            document.getElementById('cartTotal').textContent = `₹${totalPrice.toFixed(2)}`;
+            document.getElementById('drawerSubtotal').textContent = `₹${totalPrice.toFixed(2)}`;
+        } else {
+            floatingCart.style.display = 'none';
+            // Hide offcanvas if open
+            const offcanvasEl = document.getElementById('cartOffcanvas');
+            const offcanvas = bootstrap.Offcanvas.getInstance(offcanvasEl);
+            if (offcanvas) offcanvas.hide();
+        }
+    }
+</script>
+{% endblock %}
+{% endblock %}

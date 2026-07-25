@@ -9,6 +9,7 @@ urlpatterns = [
     path('logout/', views.waiter_logout, name='logout'),
     path('tables/', views.tables, name='tables'),
     path('tables/<int:table_pk>/order/', views.take_order, name='take_order'),
+    path('parcels/new/', views.create_parcel_order, name='create_parcel_order'),
     path('tables/<int:table_pk>/place-order/', views.place_order, name='place_order'),
     path('orders/<int:order_pk>/', views.order_detail, name='order_detail'),
     path('orders/<int:order_pk>/bill/', views.generate_bill, name='generate_bill'),

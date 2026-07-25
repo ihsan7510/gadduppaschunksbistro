@@ -102,7 +102,7 @@ body.tv-body {
 
 /* MARQUEE */
 .tv-marquee {
-  background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(16,185,129,0.2));
+  background: linear-gradient(135deg, rgba(169,15,26,0.2), rgba(16,185,129,0.2));
   border-bottom: 1px solid rgba(255,255,255,0.08);
   padding: 10px 0;
   overflow: hidden;

@@ -62,9 +62,18 @@ class RestaurantTable(models.Model):
     capacity = models.PositiveIntegerField(default=4)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='free')
     location = models.CharField(max_length=50, blank=True)  # e.g., "Indoor", "Outdoor"
+    is_parcel = models.BooleanField(default=False)
 
     def __str__(self):
+        if self.is_parcel:
+            return f"Parcel {self.number} ({self.get_status_display()})"
         return f"Table {self.number} ({self.get_status_display()})"
+
+    @property
+    def display_name(self):
+        if self.is_parcel:
+            return f"Parcel {self.number}"
+        return f"Table {self.number}"
 
     class Meta:
         ordering = ['number']

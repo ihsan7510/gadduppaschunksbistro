@@ -13,4 +13,5 @@ urlpatterns = [
     path('waiter/', include('waiter.urls', namespace='waiter')),
     path('kitchen/', include('kitchen.urls', namespace='kitchen')),
     path('tv/', include('tv_display.urls', namespace='tv_display')),
+    path('customer/', include('customer.urls', namespace='customer')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -5,7 +5,7 @@
 <div class="waiter-layout">
     <header class="waiter-header">
         <a href="{% url 'waiter:tables' %}" class="btn-back-header"><i class="bi bi-arrow-left"></i></a>
-        <div class="waiter-brand">Order #{{ order.order_number }} — Table {{ order.table.number }}</div>
+        <div class="waiter-brand">Order #{{ order.order_number }} — {{ order.table.display_name }}</div>
         <button class="theme-toggle-btn py-1 px-2 me-2" onclick="toggleTheme()" title="Toggle Light/Dark Mode" style="font-size: 0.95rem; height: 32px;">
             <i id="themeToggleIcon" class="bi bi-moon-stars-fill"></i>
         </button>

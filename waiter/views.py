@@ -64,7 +64,7 @@ def waiter_logout(request):
 
 def waiter_required(view_func):
     def wrapper(request, *args, **kwargs):
-        if not request.session.get('waiter_id'):
+        if not request.session.get('waiter_id') and not request.session.get('admin_logged_in'):
             return redirect('waiter:login')
         return view_func(request, *args, **kwargs)
     return wrapper
@@ -72,7 +72,9 @@ def waiter_required(view_func):
 
 @waiter_required
 def tables(request):
-    all_tables = RestaurantTable.objects.all().order_by('number')
+    all_tables = RestaurantTable.objects.filter(is_parcel=False).order_by('number')
+    parcel_tables = RestaurantTable.objects.filter(is_parcel=True).exclude(status='free').order_by('number')
+    
     # Annotate with active order info and existing bill
     table_data = []
     for table in all_tables:
@@ -93,12 +95,52 @@ def tables(request):
             'bill_pk': bill_pk,
         })
     
+    parcel_data = []
+    for table in parcel_tables:
+        active_order = table.orders.filter(
+            status__in=['pending', 'confirmed', 'preparing', 'ready', 'served', 'billed']
+        ).first()
+        # Check for an unpaid bill on this order
+        bill_pk = None
+        if active_order:
+            try:
+                if not active_order.bill.is_paid:
+                    bill_pk = active_order.bill.pk
+            except Exception:
+                pass
+        parcel_data.append({
+            'table': table,
+            'active_order': active_order,
+            'bill_pk': bill_pk,
+        })
+    
     context = {
         'table_data': table_data,
+        'parcel_data': parcel_data,
         'waiter_name': request.session.get('waiter_name'),
         'settings': get_settings(),
     }
     return render(request, 'waiter/tables.html', context)
+
+
+@waiter_required
+def create_parcel_order(request):
+    # Find a free parcel table or create a new one
+    parcel_table = RestaurantTable.objects.filter(is_parcel=True, status='free').first()
+    if not parcel_table:
+        parcel_tables = RestaurantTable.objects.filter(is_parcel=True)
+        if parcel_tables.exists():
+            next_num = max(t.number for t in parcel_tables) + 1
+        else:
+            next_num = 100
+        parcel_table = RestaurantTable.objects.create(
+            number=next_num,
+            capacity=1,
+            status='free',
+            is_parcel=True,
+            location='Takeaway'
+        )
+    return redirect('waiter:take_order', table_pk=parcel_table.pk)
 
 
 @waiter_required
@@ -127,7 +169,16 @@ def place_order(request, table_pk):
         return redirect('waiter:take_order', table_pk=table_pk)
     
     table = get_object_or_404(RestaurantTable, pk=table_pk)
-    waiter = get_object_or_404(Staff, pk=request.session['waiter_id'])
+    waiter_id = request.session.get('waiter_id')
+    if waiter_id:
+        waiter = get_object_or_404(Staff, pk=waiter_id)
+    else:
+        waiter = Staff.objects.filter(role='admin').first()
+        if not waiter:
+            waiter, _ = Staff.objects.get_or_create(
+                name="Admin",
+                defaults={"role": "admin", "pin": "0000"}
+            )
     
     # Check for existing active order or create new
     active_order = table.orders.filter(
@@ -178,7 +229,7 @@ def place_order(request, table_pk):
                 'type': 'new_order',
                 'order_id': active_order.pk,
                 'order_number': active_order.order_number,
-                'table_number': table.number,
+                'table_number': f"P-{table.number}" if table.is_parcel else f"{table.number}",
                 'waiter': waiter.name,
             }
         )
@@ -336,7 +387,7 @@ def mark_order_served(request, order_pk):
                     'type': 'order_update',
                     'order_id': order.pk,
                     'order_number': order.order_number,
-                    'table_number': order.table.number,
+                    'table_number': f"P-{order.table.number}" if order.table.is_parcel else f"{order.table.number}",
                     'status': 'served',
                 }
             )

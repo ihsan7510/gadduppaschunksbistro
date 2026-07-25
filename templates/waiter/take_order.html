@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
-{% block title %}Order — Table {{ table.number }} — {{ settings.restaurant_name }}{% endblock %}
+{% block title %}Order — {{ table.display_name }} — {{ settings.restaurant_name }}{% endblock %}
 
 {% block body %}
 <div class="waiter-layout">
     <header class="waiter-header">
         <a href="{% url 'waiter:tables' %}" class="btn-back-header"><i class="bi bi-arrow-left"></i></a>
-        <div class="waiter-brand">Table {{ table.number }} — New Order</div>
+        <div class="waiter-brand">{{ table.display_name }} — New Order</div>
         <div class="cart-indicator" id="cartIndicator">
             <i class="bi bi-cart-fill"></i> <span id="cartCount">0</span> items
             <span id="cartTotal">₹0</span>

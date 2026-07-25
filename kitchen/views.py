@@ -74,7 +74,7 @@ def update_item_status(request, item_pk):
                         'type': 'order_update',
                         'order_id': order.pk,
                         'order_number': order.order_number,
-                        'table_number': order.table.number,
+                        'table_number': f"P-{order.table.number}" if order.table.is_parcel else f"{order.table.number}",
                         'status': order.status,
                     }
                 )
