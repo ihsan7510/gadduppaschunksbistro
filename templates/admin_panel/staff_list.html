@@ -1,0 +1,51 @@
+{% extends 'admin_panel/base.html' %}
+{% block page_title %}Staff{% endblock %}
+{% block header_title %}Staff Management{% endblock %}
+
+{% block content %}
+<div class="page-toolbar">
+    <a href="{% url 'admin_panel:staff_create' %}" class="btn-primary-sm"><i class="bi bi-plus-lg"></i> Add Staff</a>
+</div>
+<div class="card-panel">
+    <div class="panel-header"><h3><i class="bi bi-people-fill"></i> All Staff ({{ staff.count }})</h3></div>
+    <div class="panel-body">
+        <table class="data-table">
+            <thead>
+                <tr><th>#</th><th>Name</th><th>Role</th><th>Phone</th><th>PIN</th><th>Status</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+                {% for s in staff %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>
+                        <div class="staff-info">
+                            <div class="staff-avatar">{{ s.name.0 }}</div>
+                            <strong>{{ s.name }}</strong>
+                        </div>
+                    </td>
+                    <td><span class="role-badge role-{{ s.role }}">{{ s.get_role_display }}</span></td>
+                    <td>{{ s.phone|default:"—" }}</td>
+                    <td><code class="pin-code">{{ s.pin }}</code></td>
+                    <td>
+                        {% if s.is_active %}
+                        <span class="badge-active">Active</span>
+                        {% else %}
+                        <span class="badge-inactive">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td class="action-btns">
+                        <a href="{% url 'admin_panel:staff_edit' s.pk %}" class="btn-edit-sm"><i class="bi bi-pencil"></i></a>
+                        <form method="post" action="{% url 'admin_panel:staff_delete' s.pk %}" style="display:inline" onsubmit="return confirm('Delete {{ s.name }}?')">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-delete-sm"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-center text-muted">No staff members added yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

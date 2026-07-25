@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}Kitchen History — {{ settings.restaurant_name }}{% endblock %}
+
+{% block body %}
+<div class="kitchen-layout">
+    <header class="kitchen-header">
+        <a href="{% url 'kitchen:orders' %}" class="btn-back-header"><i class="bi bi-arrow-left"></i> Back to Kitchen</a>
+        <div class="kitchen-brand">Today's Completed Orders</div>
+        <button class="theme-toggle-btn py-1 px-2 me-2" onclick="toggleTheme()" title="Toggle Light/Dark Mode" style="font-size: 0.95rem; height: 32px; background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1);">
+            <i id="themeToggleIcon" class="bi bi-moon-stars-fill"></i>
+        </button>
+        <span class="order-count-badge">{{ completed.count }} Completed</span>
+    </header>
+    <div class="kitchen-board compact">
+        {% for order in completed %}
+        <div class="kitchen-order-card completed-card">
+            <div class="kitchen-card-header">
+                <div class="kitchen-order-info">
+                    <span class="kitchen-table-num">T-{{ order.table.number }}</span>
+                    <span class="kitchen-order-num">#{{ order.order_number }}</span>
+                </div>
+                <span class="kitchen-status-badge served">{{ order.get_status_display }}</span>
+            </div>
+            <div class="kitchen-items">
+                {% for item in order.items.all %}
+                <div class="kitchen-item done">
+                    <span class="kitchen-qty">x{{ item.quantity }}</span>
+                    <span>{{ item.menu_item.name }}</span>
+                    <span class="kitchen-done-badge">✅</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="kitchen-empty"><div class="kitchen-empty-icon">📋</div><p>No completed orders yet today.</p></div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

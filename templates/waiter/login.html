@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}Waiter Login — {{ settings.restaurant_name }}{% endblock %}
+
+{% block body %}
+<div class="login-page waiter-login">
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="brand-icon">🧑‍🍽️</div>
+                <h1>Waiter Login</h1>
+                <p>{{ settings.restaurant_name }}</p>
+            </div>
+            {% if error %}
+            <div class="alert-error"><i class="bi bi-exclamation-triangle"></i> {{ error }}</div>
+            {% endif %}
+            <form method="post" class="login-form">
+                {% csrf_token %}
+                <div class="pin-pad">
+                    <label>Enter Your PIN</label>
+                    <input type="password" name="pin" id="pinInput" placeholder="••••••" maxlength="6"
+                        inputmode="numeric" pattern="[0-9]*" class="pin-input" autofocus autocomplete="off">
+                    <div class="numpad">
+                        {% for n in "123456789" %}
+                        <button type="button" class="numpad-btn" onclick="addPin('{{ n }}')">{{ n }}</button>
+                        {% endfor %}
+                        <button type="button" class="numpad-btn clear" onclick="clearPin()">C</button>
+                        <button type="button" class="numpad-btn" onclick="addPin('0')">0</button>
+                        <button type="submit" class="numpad-btn enter">✓</button>
+                    </div>
+                </div>
+            </form>
+            <div class="login-footer">
+                <a href="{% url 'admin_panel:login' %}">Admin Panel</a> &bull;
+                <a href="{% url 'kitchen:login' %}">Kitchen</a> &bull;
+                <a href="{% url 'tv_display:display' %}">TV Display</a>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+function addPin(n) {
+    const el = document.getElementById('pinInput');
+    if (el.value.length < 6) el.value += n;
+}
+function clearPin() {
+    document.getElementById('pinInput').value = '';
+}
+</script>
+{% endblock %}

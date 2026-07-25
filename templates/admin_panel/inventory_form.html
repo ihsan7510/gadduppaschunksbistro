@@ -1,0 +1,55 @@
+{% extends 'admin_panel/base.html' %}
+{% block page_title %}{{ title }}{% endblock %}
+{% block header_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="form-page">
+    <a href="{% url 'admin_panel:inventory_list' %}" class="btn-back"><i class="bi bi-arrow-left"></i> Back</a>
+    <div class="card-panel">
+        <div class="panel-header"><h3><i class="bi bi-box-seam-fill"></i> {{ title }}</h3></div>
+        <div class="panel-body">
+            <form method="post" class="styled-form">
+                {% csrf_token %}
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Item Name *</label>
+                        <input type="text" name="name" value="{{ item.name|default:'' }}" class="form-input-dark" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Unit *</label>
+                        <select name="unit" class="form-select-dark" required>
+                            {% for val, label in units %}
+                            <option value="{{ val }}" {% if item and item.unit == val %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Current Quantity *</label>
+                        <input type="number" name="quantity" value="{{ item.quantity|default:0 }}" class="form-input-dark" step="0.01" required min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Low Stock Threshold</label>
+                        <input type="number" name="low_stock_threshold" value="{{ item.low_stock_threshold|default:5 }}" class="form-input-dark" step="0.01" min="0">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Cost per Unit (₹)</label>
+                        <input type="number" name="cost_per_unit" value="{{ item.cost_per_unit|default:0 }}" class="form-input-dark" step="0.01" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Supplier</label>
+                        <input type="text" name="supplier" value="{{ item.supplier|default:'' }}" class="form-input-dark">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <a href="{% url 'admin_panel:inventory_list' %}" class="btn-secondary">Cancel</a>
+                    <button type="submit" class="btn-primary">Save Item</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% block title %}Order — Table {{ table.number }} — {{ settings.restaurant_name }}{% endblock %}
+
+{% block body %}
+<div class="waiter-layout">
+    <header class="waiter-header">
+        <a href="{% url 'waiter:tables' %}" class="btn-back-header"><i class="bi bi-arrow-left"></i></a>
+        <div class="waiter-brand">Table {{ table.number }} — New Order</div>
+        <div class="cart-indicator" id="cartIndicator">
+            <i class="bi bi-cart-fill"></i> <span id="cartCount">0</span> items
+            <span id="cartTotal">₹0</span>
+        </div>
+        <button class="theme-toggle-btn py-1 px-2 ms-2" onclick="toggleTheme()" title="Toggle Light/Dark Mode" style="font-size: 0.95rem; height: 32px;">
+            <i id="themeToggleIcon" class="bi bi-moon-stars-fill"></i>
+        </button>
+    </header>
+
+    <div class="order-layout">
+        <!-- Category Tabs -->
+        <div class="category-tabs" id="categoryTabs">
+            <button class="cat-tab active" onclick="filterCategory('all')">All</button>
+            {% for cat in categories %}
+            <button class="cat-tab" onclick="filterCategory('{{ cat.pk }}')" id="cat-{{ cat.pk }}">
+                {{ cat.icon }} {{ cat.name }}
+            </button>
+            {% endfor %}
+        </div>
+
+        <!-- Menu Items -->
+        <form method="post" action="{% url 'waiter:place_order' table.pk %}" id="orderForm">
+            {% csrf_token %}
+            <textarea name="order_notes" placeholder="Order notes (optional)..." class="order-notes" rows="1"></textarea>
+            
+            <div class="menu-items-grid" id="menuGrid">
+                {% for cat in categories %}
+                {% for item in cat.items.all %}
+                {% if item.is_available %}
+                <div class="menu-order-card" data-cat="{{ cat.pk }}" data-name="{{ item.name|lower }}" data-price="{{ item.price }}">
+                    {% if item.image %}
+                    <img src="{{ item.image.url }}" alt="{{ item.name }}" class="menu-order-img">
+                    {% else %}
+                    <div class="menu-order-img-placeholder">{{ cat.icon }}</div>
+                    {% endif %}
+                    <div class="menu-order-info">
+                        <div class="menu-order-name">
+                            <span class="veg-dot {% if item.is_veg %}veg{% else %}non-veg{% endif %}"></span>
+                            {{ item.name }}
+                        </div>
+                        <div class="menu-order-price">₹{{ item.price }}</div>
+                        {% if item.description %}
+                        <div class="menu-order-desc">{{ item.description|truncatechars:60 }}</div>
+                        {% endif %}
+                        <div class="menu-order-controls">
+                            <div class="qty-control">
+                                <button type="button" class="qty-btn minus" onclick="changeQty({{ item.pk }}, -1)">−</button>
+                                <input type="number" name="qty_{{ item.pk }}" id="qty_{{ item.pk }}"
+                                    value="0" min="0" max="20" class="qty-input" readonly
+                                    data-price="{{ item.price }}">
+                                <button type="button" class="qty-btn plus" onclick="changeQty({{ item.pk }}, 1)">+</button>
+                            </div>
+                            <input type="text" name="note_{{ item.pk }}" placeholder="Note..." class="item-note-input" id="note_{{ item.pk }}">
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+                {% endfor %}
+            </div>
+
+            <!-- Submit Button -->
+            <div class="order-submit-bar">
+                <div class="order-summary">
+                    <span id="summaryItems">0 items selected</span>
+                    <span id="summaryTotal">₹0.00</span>
+                </div>
+                <button type="submit" class="btn-place-order" id="placeOrderBtn" disabled>
+                    <i class="bi bi-send-fill"></i> Send to Kitchen
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+let cart = {};
+
+function changeQty(itemId, delta) {
+    const input = document.getElementById(`qty_${itemId}`);
+    let val = parseInt(input.value) + delta;
+    val = Math.max(0, Math.min(20, val));
+    input.value = val;
+    
+    const price = parseFloat(input.dataset.price);
+    if (val > 0) cart[itemId] = { qty: val, price: price };
+    else delete cart[itemId];
+    
+    updateCart();
+    
+    // Highlight card
+    const card = input.closest('.menu-order-card');
+    card.classList.toggle('selected', val > 0);
+}
+
+function updateCart() {
+    let totalItems = 0, totalPrice = 0;
+    for (const [id, item] of Object.entries(cart)) {
+        totalItems += item.qty;
+        totalPrice += item.qty * item.price;
+    }
+    document.getElementById('cartCount').textContent = totalItems;
+    document.getElementById('cartTotal').textContent = `₹${totalPrice.toFixed(2)}`;
+    document.getElementById('summaryItems').textContent = `${totalItems} item(s)`;
+    document.getElementById('summaryTotal').textContent = `₹${totalPrice.toFixed(2)}`;
+    document.getElementById('placeOrderBtn').disabled = totalItems === 0;
+}
+
+function filterCategory(catId) {
+    document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+    const cards = document.querySelectorAll('.menu-order-card');
+    cards.forEach(card => {
+        card.style.display = (catId === 'all' || card.dataset.cat === catId) ? '' : 'none';
+    });
+    event.target.classList.add('active');
+}
+</script>
+{% endblock %}

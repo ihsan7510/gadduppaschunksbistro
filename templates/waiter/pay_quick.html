@@ -1,0 +1,254 @@
+{% extends 'base.html' %}
+{% block title %}Collect Payment — Table {{ bill.order.table.number }}{% endblock %}
+
+{% block body %}
+<div class="waiter-layout">
+    <header class="waiter-header">
+        <a href="{% url 'waiter:tables' %}" class="btn-back-header"><i class="bi bi-arrow-left"></i></a>
+        <div class="waiter-brand">
+            <i class="bi bi-cash-coin"></i>
+            Collect Payment — Table {{ bill.order.table.number }}
+        </div>
+        <button class="theme-toggle-btn py-1 px-2 me-2" onclick="toggleTheme()" title="Toggle Light/Dark Mode" style="font-size: 0.95rem; height: 32px;">
+            <i id="themeToggleIcon" class="bi bi-moon-stars-fill"></i>
+        </button>
+        <span class="waiter-badge"><i class="bi bi-person-fill"></i> {{ waiter_name }}</span>
+    </header>
+
+    <div class="waiter-content" style="max-width:520px">
+
+        <!-- Bill Summary -->
+        <div class="pay-quick-summary">
+            <div class="pq-header">
+                <div class="pq-order-num">#{{ bill.order.order_number }}</div>
+                <div class="pq-table">Table {{ bill.order.table.number }}</div>
+            </div>
+
+            <div class="pq-items">
+                {% for item in bill.order.items.all %}
+                <div class="pq-item-row">
+                    <span class="pq-qty">×{{ item.quantity }}</span>
+                    <span class="pq-name">{{ item.menu_item.name }}</span>
+                    <span class="pq-price">₹{{ item.subtotal }}</span>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="pq-totals">
+                <div class="pq-total-row"><span>Subtotal</span><span>₹{{ bill.subtotal }}</span></div>
+                <div class="pq-total-row"><span>Tax ({{ bill.tax_percent }}%)</span><span>₹{{ bill.tax_amount }}</span></div>
+                {% if bill.discount_percent > 0 %}
+                <div class="pq-total-row discount"><span>Discount ({{ bill.discount_percent }}%)</span><span>-₹{{ bill.discount_amount }}</span></div>
+                {% endif %}
+                <div class="pq-total-row grand"><span>TOTAL</span><span>₹{{ bill.total }}</span></div>
+            </div>
+        </div>
+
+        <!-- Payment Form -->
+        <form method="post" id="payForm">
+            {% csrf_token %}
+
+            <!-- Optional Discount -->
+            <div class="pq-discount-row">
+                <label>Discount %</label>
+                <input type="number" name="discount_percent" value="{{ bill.discount_percent }}"
+                    min="0" max="100" step="0.5" class="pq-discount-input"
+                    onchange="updateTotal(this.value)">
+            </div>
+
+            <!-- Payment Method -->
+            <div class="pq-pay-methods">
+                <label class="pq-method {% if bill.payment_method == 'cash' %}selected{% endif %}" id="lbl-cash">
+                    <input type="radio" name="payment_method" value="cash"
+                        {% if bill.payment_method == 'cash' %}checked{% endif %}
+                        onchange="selectMethod('cash')">
+                    <div class="pq-method-icon">💵</div>
+                    <div class="pq-method-name">Cash</div>
+                </label>
+                <label class="pq-method" id="lbl-card">
+                    <input type="radio" name="payment_method" value="card"
+                        onchange="selectMethod('card')">
+                    <div class="pq-method-icon">💳</div>
+                    <div class="pq-method-name">Card</div>
+                </label>
+                <label class="pq-method" id="lbl-upi">
+                    <input type="radio" name="payment_method" value="upi"
+                        onchange="selectMethod('upi')">
+                    <div class="pq-method-icon">📱</div>
+                    <div class="pq-method-name">UPI</div>
+                </label>
+                <label class="pq-method" id="lbl-online">
+                    <input type="radio" name="payment_method" value="online"
+                        onchange="selectMethod('online')">
+                    <div class="pq-method-icon">🌐</div>
+                    <div class="pq-method-name">Online</div>
+                </label>
+            </div>
+
+            <!-- Confirm Button -->
+            <button type="submit" class="btn-confirm-paid" id="confirmBtn">
+                <i class="bi bi-check-circle-fill"></i>
+                Confirm Paid — ₹<span id="totalDisplay">{{ bill.total }}</span>
+            </button>
+
+            <a href="{% url 'waiter:tables' %}" class="btn-cancel-pay">
+                Cancel
+            </a>
+        </form>
+    </div>
+</div>
+
+<script>
+function selectMethod(method) {
+    ['cash','card','upi','online'].forEach(m => {
+        document.getElementById('lbl-' + m).classList.toggle('selected', m === method);
+    });
+}
+
+function updateTotal(discount) {
+    const subtotal = {{ bill.subtotal }};
+    const tax = {{ bill.tax_amount }};
+    const discountAmt = (subtotal * parseFloat(discount || 0)) / 100;
+    const total = subtotal + tax - discountAmt;
+    document.getElementById('totalDisplay').textContent = total.toFixed(2);
+}
+</script>
+
+{% block extra_css %}
+<style>
+/* ── Pay Quick Page ── */
+.pay-quick-summary {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+.pq-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    padding: 18px 20px 12px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.02);
+}
+.pq-order-num { font-size: 1.3rem; font-weight: 900; color: var(--accent-purple); }
+.pq-table { font-size: 0.9rem; color: var(--text-secondary); }
+
+.pq-items { padding: 12px 20px; display: flex; flex-direction: column; gap: 6px; }
+.pq-item-row { display: flex; align-items: center; gap: 10px; font-size: 0.9rem; }
+.pq-qty { min-width: 30px; color: var(--accent-orange); font-weight: 700; }
+.pq-name { flex: 1; color: var(--text-primary); }
+.pq-price { color: var(--text-secondary); font-weight: 600; }
+
+.pq-totals {
+    border-top: 1px solid var(--border);
+    padding: 12px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.pq-total-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+.pq-total-row.discount { color: var(--accent-green); }
+.pq-total-row.grand {
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: var(--text-primary);
+    border-top: 1px solid var(--border-light);
+    padding-top: 10px;
+    margin-top: 4px;
+}
+
+/* Discount row */
+.pq-discount-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 16px;
+}
+.pq-discount-row label { color: var(--text-secondary); font-size: 0.9rem; flex: 1; }
+.pq-discount-input {
+    width: 80px; text-align: center;
+    background: var(--bg-secondary); border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm); color: var(--text-primary); font-size: 1rem; font-weight: 700;
+    padding: 6px; appearance: none;
+}
+
+/* Payment Methods */
+.pq-pay-methods {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+}
+.pq-method {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 14px 8px;
+    background: var(--bg-card);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.pq-method input { display: none; }
+.pq-method:hover { border-color: var(--border-light); background: var(--bg-card-hover); }
+.pq-method.selected {
+    border-color: var(--accent-green);
+    background: rgba(16,185,129,0.08);
+    box-shadow: 0 0 16px rgba(16,185,129,0.15);
+}
+.pq-method-icon { font-size: 1.8rem; }
+.pq-method-name { font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); }
+.pq-method.selected .pq-method-name { color: var(--accent-green); }
+
+/* Confirm Button */
+.btn-confirm-paid {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 18px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    border: none;
+    border-radius: var(--radius-lg);
+    color: #fff;
+    font-size: 1.2rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 20px rgba(16,185,129,0.3);
+    margin-bottom: 12px;
+    letter-spacing: 0.01em;
+}
+.btn-confirm-paid:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(16,185,129,0.4);
+}
+.btn-confirm-paid i { font-size: 1.4rem; }
+
+.btn-cancel-pay {
+    display: block;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    padding: 8px;
+    transition: color 0.2s;
+}
+.btn-cancel-pay:hover { color: var(--text-secondary); }
+</style>
+{% endblock %}
+
+{% endblock %}

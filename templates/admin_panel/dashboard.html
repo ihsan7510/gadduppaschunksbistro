@@ -1,0 +1,149 @@
+{% extends 'admin_panel/base.html' %}
+{% block page_title %}Dashboard{% endblock %}
+{% block header_title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Stats Grid -->
+<div class="stats-grid">
+    <div class="stat-card green">
+        <div class="stat-icon"><i class="bi bi-cash-stack"></i></div>
+        <div class="stat-body">
+            <div class="stat-value">₹{{ today_revenue|floatformat:0 }}</div>
+            <div class="stat-label">Today's Revenue</div>
+        </div>
+    </div>
+    <div class="stat-card blue">
+        <div class="stat-icon"><i class="bi bi-receipt"></i></div>
+        <div class="stat-body">
+            <div class="stat-value">{{ today_orders }}</div>
+            <div class="stat-label">Today's Orders</div>
+        </div>
+    </div>
+    <div class="stat-card purple">
+        <div class="stat-icon"><i class="bi bi-grid-3x3-gap"></i></div>
+        <div class="stat-body">
+            <div class="stat-value">{{ free_tables }}/{{ total_tables }}</div>
+            <div class="stat-label">Tables Free</div>
+        </div>
+    </div>
+    <div class="stat-card orange">
+        <div class="stat-icon"><i class="bi bi-fire"></i></div>
+        <div class="stat-body">
+            <div class="stat-value">{{ active_orders }}</div>
+            <div class="stat-label">Active Orders</div>
+        </div>
+    </div>
+    <div class="stat-card teal">
+        <div class="stat-icon"><i class="bi bi-person-check"></i></div>
+        <div class="stat-body">
+            <div class="stat-value">{{ staff_on_duty }}</div>
+            <div class="stat-label">Staff On Duty</div>
+        </div>
+    </div>
+    <div class="stat-card {% if low_stock_count > 0 %}red{% else %}gray{% endif %}">
+        <div class="stat-icon"><i class="bi bi-exclamation-triangle"></i></div>
+        <div class="stat-body">
+            <div class="stat-value">{{ low_stock_count }}</div>
+            <div class="stat-label">Low Stock Items</div>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-grid">
+    <!-- Revenue Chart -->
+    <div class="card-panel">
+        <div class="panel-header">
+            <h3><i class="bi bi-bar-chart-line-fill"></i> Weekly Revenue</h3>
+        </div>
+        <div class="panel-body">
+            <canvas id="revenueChart" height="200"></canvas>
+        </div>
+    </div>
+
+    <!-- Table Status -->
+    <div class="card-panel">
+        <div class="panel-header">
+            <h3><i class="bi bi-grid-3x3-gap-fill"></i> Table Status</h3>
+            <a href="{% url 'admin_panel:table_list' %}" class="btn-sm-link">Manage</a>
+        </div>
+        <div class="panel-body">
+            <div class="table-status-legend">
+                <span class="legend-dot free"></span> Free: {{ free_tables }}
+                <span class="legend-dot occupied"></span> Occupied: {{ occupied_tables }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Orders -->
+<div class="card-panel mt-20">
+    <div class="panel-header">
+        <h3><i class="bi bi-clock-history"></i> Recent Orders</h3>
+        <a href="{% url 'admin_panel:billing_list' %}" class="btn-sm-link">All Bills</a>
+    </div>
+    <div class="panel-body">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Order #</th>
+                    <th>Table</th>
+                    <th>Waiter</th>
+                    <th>Status</th>
+                    <th>Time</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in recent_orders %}
+                <tr>
+                    <td><strong>#{{ order.order_number }}</strong></td>
+                    <td>Table {{ order.table.number }}</td>
+                    <td>{{ order.waiter.name|default:"—" }}</td>
+                    <td><span class="badge status-{{ order.status }}">{{ order.get_status_display }}</span></td>
+                    <td>{{ order.created_at|date:"h:i A" }}</td>
+                    <td>₹{{ order.total_amount|floatformat:2 }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-center text-muted">No orders today</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const ctx = document.getElementById('revenueChart').getContext('2d');
+new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: {{ weekly_labels|safe }},
+        datasets: [{
+            label: 'Revenue (₹)',
+            data: {{ weekly_data|safe }},
+            backgroundColor: 'rgba(99, 102, 241, 0.6)',
+            borderColor: 'rgba(99, 102, 241, 1)',
+            borderWidth: 2,
+            borderRadius: 8,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: { color: 'rgba(255,255,255,0.05)' },
+                ticks: { color: '#94a3b8' }
+            },
+            x: {
+                grid: { display: false },
+                ticks: { color: '#94a3b8' }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

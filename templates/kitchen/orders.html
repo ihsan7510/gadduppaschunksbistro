@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% block title %}Kitchen — {{ settings.restaurant_name }}{% endblock %}
+
+{% block body %}
+<div class="kitchen-layout">
+    <header class="kitchen-header">
+        <div class="kitchen-brand">
+            <span class="fire-icon">🔥</span>
+            <span>Kitchen Display — {{ settings.restaurant_name }}</span>
+        </div>
+        <div class="kitchen-header-right">
+            <span class="order-count-badge" id="pendingCount">{{ pending_orders.count }} Pending</span>
+            <button class="theme-toggle-btn py-1 px-2" onclick="toggleTheme()" title="Toggle Light/Dark Mode" style="font-size: 0.95rem; height: 32px; background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1);">
+                <i id="themeToggleIcon" class="bi bi-moon-stars-fill"></i>
+            </button>
+            <div class="header-time" id="kTime"></div>
+            <a href="{% url 'kitchen:order_history' %}" class="btn-secondary-sm">History</a>
+            <a href="{% url 'kitchen:login' %}" class="btn-logout-sm">Exit</a>
+        </div>
+    </header>
+
+    <div class="kitchen-board" id="kitchenBoard">
+        {% for order in pending_orders %}
+        <div class="kitchen-order-card status-{{ order.status }}" id="order-{{ order.pk }}">
+            <div class="kitchen-card-header">
+                <div class="kitchen-order-info">
+                    <span class="kitchen-table-num">T-{{ order.table.number }}</span>
+                    <span class="kitchen-order-num">#{{ order.order_number }}</span>
+                </div>
+                <div class="kitchen-card-meta">
+                    <span class="kitchen-time">{{ order.created_at|date:"h:i A" }}</span>
+                    <span class="kitchen-status-badge {{ order.status }}">{{ order.get_status_display }}</span>
+                </div>
+            </div>
+            {% if order.waiter %}
+            <div class="kitchen-waiter">Waiter: {{ order.waiter.name }}</div>
+            {% endif %}
+            <div class="kitchen-items">
+                {% for item in order.items.all %}
+                <div class="kitchen-item status-{{ item.status }}" id="item-{{ item.pk }}">
+                    <div class="kitchen-item-info">
+                        <span class="kitchen-qty">x{{ item.quantity }}</span>
+                        <span class="kitchen-item-name">{{ item.menu_item.name }}</span>
+                        {% if item.notes %}<span class="kitchen-item-note">📝 {{ item.notes }}</span>{% endif %}
+                    </div>
+                    <div class="kitchen-item-btns">
+                        {% if item.status == 'pending' %}
+                        <button class="btn-kitchen-action preparing" onclick="updateItem({{ item.pk }}, 'preparing')">
+                            🔥 Start
+                        </button>
+                        {% elif item.status == 'preparing' %}
+                        <button class="btn-kitchen-action ready" onclick="updateItem({{ item.pk }}, 'ready')">
+                            ✅ Ready
+                        </button>
+                        {% else %}
+                        <span class="kitchen-done-badge">✅ Done</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% if order.notes %}
+            <div class="kitchen-order-notes">📋 {{ order.notes }}</div>
+            {% endif %}
+            <div class="kitchen-card-footer">
+                <button class="btn-kitchen-complete" onclick="completeOrder({{ order.pk }})">
+                    <i class="bi bi-check-all"></i> Mark All Served
+                </button>
+            </div>
+        </div>
+        {% empty %}
+        <div class="kitchen-empty" id="kitchenEmpty">
+            <div class="kitchen-empty-icon">😴</div>
+            <p>No pending orders. Kitchen is free!</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Audio alert element -->
+<audio id="newOrderSound" preload="auto">
+    <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAA..." type="audio/wav">
+</audio>
+
+<script>
+// WebSocket connection
+const ws = new WebSocket(`ws://${window.location.host}/ws/kitchen/`);
+
+ws.onmessage = function(e) {
+    const data = JSON.parse(e.data);
+    if (data.type === 'new_order') {
+        // Play sound and reload orders
+        playAlert();
+        showNewOrderBanner(data.order_number, data.table_number);
+        setTimeout(() => location.reload(), 2000);
+    }
+};
+
+ws.onerror = function() {
+    console.log('Kitchen WS not available, using polling.');
+    setInterval(() => location.reload(), 15000); // Fallback polling
+};
+
+function playAlert() {
+    try {
+        const ctx = new AudioContext();
+        const osc = ctx.createOscillator();
+        osc.connect(ctx.destination);
+        osc.frequency.value = 880;
+        osc.start(); osc.stop(ctx.currentTime + 0.3);
+    } catch(e) {}
+}
+
+function showNewOrderBanner(orderNum, tableNum) {
+    const banner = document.createElement('div');
+    banner.className = 'new-order-banner';
+    banner.innerHTML = `🆕 New Order! Table ${tableNum} — #${orderNum}`;
+    document.body.appendChild(banner);
+    setTimeout(() => banner.remove(), 4000);
+}
+
+function updateItem(itemId, status) {
+    fetch(`/kitchen/items/${itemId}/status/`, {
+        method: 'POST',
+        headers: {'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/x-www-form-urlencoded'},
+        body: `status=${status}`
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) location.reload();
+    });
+}
+
+function completeOrder(orderId) {
+    fetch(`/kitchen/orders/${orderId}/complete/`, {
+        method: 'POST',
+        headers: {'X-CSRFToken': getCookie('csrftoken')},
+    })
+    .then(r => r.json())
+    .then(data => { if (data.success) location.reload(); });
+}
+
+function getCookie(name) {
+    const val = document.cookie.split('; ').find(r => r.startsWith(name + '='));
+    return val ? val.split('=')[1] : '';
+}
+
+// Live clock
+function updateTime() {
+    const el = document.getElementById('kTime');
+    if(el) el.textContent = new Date().toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+setInterval(updateTime, 1000); updateTime();
+</script>
+{% endblock %}

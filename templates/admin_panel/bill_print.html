@@ -1,0 +1,20 @@
+{% extends 'admin_panel/base.html' %}
+{% block page_title %}Print Bill{% endblock %}
+{% block header_title %}Print Bill{% endblock %}
+
+{% block content %}
+<div class="form-page">
+    <a href="{% url 'admin_panel:bill_detail' bill.pk %}" class="btn-back"><i class="bi bi-arrow-left"></i> Back</a>
+    {% if success %}
+    <div class="alert-banner success"><i class="bi bi-check-circle-fill"></i> {{ message }}</div>
+    {% else %}
+    <div class="alert-banner warning">
+        <i class="bi bi-printer"></i> Printer not connected — showing receipt preview below.
+        <small>{{ message }}</small>
+    </div>
+    {% endif %}
+    <div class="receipt-preview">
+        <pre class="receipt-text">{{ receipt_text }}</pre>
+    </div>
+</div>
+{% endblock %}

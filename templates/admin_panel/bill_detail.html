@@ -1,0 +1,61 @@
+{% extends 'admin_panel/base.html' %}
+{% block page_title %}Bill #{{ bill.pk }}{% endblock %}
+{% block header_title %}Bill Details{% endblock %}
+
+{% block content %}
+<div class="form-page">
+    <a href="{% url 'admin_panel:billing_list' %}" class="btn-back"><i class="bi bi-arrow-left"></i> Back</a>
+    <div class="receipt-preview">
+        <div class="receipt-card">
+            <div class="receipt-header">
+                <h2>{{ settings.restaurant_name }}</h2>
+                {% if settings.address %}<p>{{ settings.address }}</p>{% endif %}
+                {% if settings.phone %}<p>📞 {{ settings.phone }}</p>{% endif %}
+                {% if settings.gstin %}<p>GSTIN: {{ settings.gstin }}</p>{% endif %}
+            </div>
+            <div class="receipt-divider">- - - - - - - - - - - - - - - - - -</div>
+            <div class="receipt-info">
+                <div><strong>Order:</strong> #{{ bill.order.order_number }}</div>
+                <div><strong>Table:</strong> {{ bill.order.table.number }}</div>
+                <div><strong>Date:</strong> {{ bill.created_at|date:"d M Y, h:i A" }}</div>
+                {% if bill.order.waiter %}<div><strong>Waiter:</strong> {{ bill.order.waiter.name }}</div>{% endif %}
+            </div>
+            <div class="receipt-divider">- - - - - - - - - - - - - - - - - -</div>
+            <table class="receipt-items">
+                <thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Total</th></tr></thead>
+                <tbody>
+                    {% for item in bill.order.items.all %}
+                    <tr>
+                        <td>
+                            {{ item.menu_item.name }}
+                            {% if item.notes %}<br><small class="text-muted">Note: {{ item.notes }}</small>{% endif %}
+                        </td>
+                        <td>{{ item.quantity }}</td>
+                        <td>₹{{ item.price }}</td>
+                        <td>₹{{ item.subtotal }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div class="receipt-divider">- - - - - - - - - - - - - - - - - -</div>
+            <div class="receipt-totals">
+                <div><span>Subtotal</span><span>₹{{ bill.subtotal }}</span></div>
+                <div><span>Tax ({{ bill.tax_percent }}%)</span><span>₹{{ bill.tax_amount }}</span></div>
+                {% if bill.discount_percent > 0 %}
+                <div class="discount-row"><span>Discount ({{ bill.discount_percent }}%)</span><span>-₹{{ bill.discount_amount }}</span></div>
+                {% endif %}
+                <div class="total-row"><span>TOTAL</span><span>₹{{ bill.total }}</span></div>
+            </div>
+            <div class="receipt-divider">- - - - - - - - - - - - - - - - - -</div>
+            <div class="receipt-payment">
+                Payment: <strong>{{ bill.get_payment_method_display }}</strong>
+                {% if bill.is_paid %}<span class="badge-active">PAID</span>{% else %}<span class="badge-warning">UNPAID</span>{% endif %}
+            </div>
+            <div class="receipt-footer">{{ settings.footer_message }}</div>
+        </div>
+        <div class="receipt-actions">
+            <a href="{% url 'admin_panel:bill_print' bill.pk %}" class="btn-primary"><i class="bi bi-printer"></i> Print Bill</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

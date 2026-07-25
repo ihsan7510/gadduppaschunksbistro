@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}Print — {{ settings.restaurant_name }}{% endblock %}
+
+{% block body %}
+<div class="waiter-layout">
+    <header class="waiter-header">
+        <a href="{% url 'waiter:tables' %}" class="btn-back-header"><i class="bi bi-arrow-left"></i></a>
+        <div class="waiter-brand">Print Receipt</div>
+        <button class="theme-toggle-btn py-1 px-2" onclick="toggleTheme()" title="Toggle Light/Dark Mode" style="font-size: 0.95rem; height: 32px;">
+            <i id="themeToggleIcon" class="bi bi-moon-stars-fill"></i>
+        </button>
+    </header>
+    <div class="waiter-content">
+        {% if success %}
+        <div class="alert-banner success"><i class="bi bi-check-circle-fill"></i> Bill printed successfully!</div>
+        {% else %}
+        <div class="alert-banner warning"><i class="bi bi-printer"></i> Printer not connected — receipt preview:</div>
+        {% endif %}
+        <pre class="receipt-text-waiter">{{ receipt_text }}</pre>
+        <div class="order-action-btns">
+            <a href="{% url 'waiter:tables' %}" class="btn-primary"><i class="bi bi-house"></i> Back to Tables</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

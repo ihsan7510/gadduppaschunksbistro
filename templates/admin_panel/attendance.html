@@ -1,0 +1,120 @@
+{% extends 'admin_panel/base.html' %}
+{% block page_title %}Attendance{% endblock %}
+{% block header_title %}Staff Attendance{% endblock %}
+
+{% block content %}
+<div class="page-toolbar">
+    <form method="get" class="date-filter-form">
+        <label>Date:</label>
+        <input type="date" name="date" value="{{ selected_date|date:'Y-m-d' }}" onchange="this.form.submit()">
+    </form>
+    <a href="?date={{ today|date:'Y-m-d' }}" class="btn-primary-sm">Today</a>
+</div>
+
+<div class="card-panel">
+    <div class="panel-header">
+        <h3><i class="bi bi-calendar-check-fill"></i> Attendance — {{ selected_date|date:"d M Y" }}</h3>
+        <div class="attendance-legend">
+            <span class="att-badge on_duty">On Duty</span>
+            <span class="att-badge present">Present</span>
+            <span class="att-badge absent">Absent</span>
+        </div>
+    </div>
+    <div class="panel-body">
+        <table class="data-table attendance-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Staff Member</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Clock In</th>
+                    <th>Clock Out</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                <tr class="att-row att-{{ row.status }}">
+                    <td>{{ forloop.counter }}</td>
+                    <td>
+                        <div class="staff-info">
+                            <div class="staff-avatar">{{ row.staff.name.0 }}</div>
+                            <div>
+                                <strong>{{ row.staff.name }}</strong>
+                                <small>{{ row.staff.phone }}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td><span class="role-badge">{{ row.staff.get_role_display }}</span></td>
+                    <td>
+                        <span class="att-badge {{ row.status }}">
+                            {% if row.status == 'on_duty' %}🟢 On Duty
+                            {% elif row.status == 'present' %}✅ Present
+                            {% else %}❌ Absent{% endif %}
+                        </span>
+                    </td>
+                    <td>{{ row.clock_in|default:"—" }}</td>
+                    <td>{{ row.clock_out|default:"—" }}</td>
+                    <td>
+                        <button class="btn-edit-sm" onclick="openAttModal({{ row.staff.pk }}, '{{ row.staff.name }}', '{{ row.status }}', '{{ row.clock_in|default:'' }}', '{{ row.clock_out|default:'' }}')">
+                            <i class="bi bi-pencil-square"></i> Edit
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Edit Attendance Modal -->
+<div class="modal-overlay" id="attModal" onclick="if(event.target===this)closeAttModal()">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h4>Edit Attendance</h4>
+            <button onclick="closeAttModal()">×</button>
+        </div>
+        <form method="post" id="attForm">
+            {% csrf_token %}
+            <input type="hidden" name="date" value="{{ selected_date|date:'Y-m-d' }}">
+            <div class="form-group">
+                <label>Staff: <strong id="attStaffName"></strong></label>
+            </div>
+            <div class="form-group">
+                <label>Status</label>
+                <select name="status" id="attStatus" class="form-select-dark">
+                    <option value="absent">Absent</option>
+                    <option value="present">Present</option>
+                    <option value="on_duty">On Duty</option>
+                </select>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Clock In</label>
+                    <input type="time" name="clock_in" id="attClockIn" class="form-input-dark">
+                </div>
+                <div class="form-group">
+                    <label>Clock Out</label>
+                    <input type="time" name="clock_out" id="attClockOut" class="form-input-dark">
+                </div>
+            </div>
+            <button type="submit" class="btn-primary-full">Save Attendance</button>
+        </form>
+    </div>
+</div>
+
+<script>
+function openAttModal(pk, name, status, clockIn, clockOut) {
+    document.getElementById('attStaffName').textContent = name;
+    document.getElementById('attStatus').value = status;
+    document.getElementById('attClockIn').value = clockIn;
+    document.getElementById('attClockOut').value = clockOut;
+    document.getElementById('attForm').action = `/admin-panel/attendance/${pk}/update/`;
+    document.getElementById('attModal').style.display = 'flex';
+}
+function closeAttModal() {
+    document.getElementById('attModal').style.display = 'none';
+}
+</script>
+{% endblock %}

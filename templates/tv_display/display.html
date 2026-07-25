@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Status — {{ settings.restaurant_name }}</title>
+    <script>
+        // Apply saved theme early to prevent flash
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/tv.css' %}">
+</head>
+<body class="tv-body">
+    <!-- Header -->
+    <header class="tv-header">
+        <div class="tv-brand">
+            {% if settings.logo %}
+            <img src="{{ settings.logo.url }}" alt="Logo" class="tv-logo">
+            {% else %}
+            <span class="tv-logo-icon">🍴</span>
+            {% endif %}
+            <div>
+                <h1 class="tv-restaurant-name">{{ settings.restaurant_name }}</h1>
+                <p class="tv-tagline">Live Order Status</p>
+            </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <button class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Light/Dark Mode">
+                <i id="themeToggleIcon" class="bi bi-moon-stars-fill"></i>
+            </button>
+            <div class="tv-clock" id="tvClock"></div>
+        </div>
+    </header>
+
+    <!-- Marquee -->
+    <div class="tv-marquee">
+        <div class="tv-marquee-inner">
+            ✨ Welcome to {{ settings.restaurant_name }} &nbsp;&nbsp;&nbsp;
+            🍽️ Your order status is shown below &nbsp;&nbsp;&nbsp;
+            🔔 You will be notified when your order is ready &nbsp;&nbsp;&nbsp;
+        </div>
+    </div>
+
+    <!-- Status Boards -->
+    <div class="tv-boards">
+        <!-- Preparing Column -->
+        <div class="tv-column">
+            <div class="tv-column-header cooking">
+                <span class="tv-col-icon">🔥</span>
+                <h2>Preparing</h2>
+                <span class="tv-col-count" id="cookingCount">{{ preparing|length }}</span>
+            </div>
+            <div class="tv-cards" id="cookingCards">
+                {% for order in preparing %}
+                <div class="tv-order-card cooking" id="tv-order-{{ order.pk }}">
+                    <div class="tv-order-num">#{{ order.order_number }}</div>
+                    <div class="tv-table-num">Table {{ order.table.number }}</div>
+                    <div class="tv-items">
+                        {% for item in order.items.all %}
+                        <span class="tv-item {% if item.status == 'ready' %}item-done{% endif %}">
+                            {{ item.menu_item.name }}{% if item.quantity > 1 %} ×{{ item.quantity }}{% endif %}
+                        </span>
+                        {% endfor %}
+                    </div>
+                    <div class="tv-cooking-indicator">
+                        <span class="cooking-dots">
+                            <span></span><span></span><span></span>
+                        </span>
+                        Cooking...
+                    </div>
+                </div>
+                {% empty %}
+                <div class="tv-empty-col" id="cookingEmpty">
+                    <span>🕐 No orders cooking</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Ready Column -->
+        <div class="tv-column">
+            <div class="tv-column-header ready">
+                <span class="tv-col-icon">✅</span>
+                <h2>Ready to Serve</h2>
+                <span class="tv-col-count" id="readyCount">{{ ready|length }}</span>
+            </div>
+            <div class="tv-cards" id="readyCards">
+                {% for order in ready %}
+                <div class="tv-order-card ready" id="tv-order-{{ order.pk }}">
+                    <div class="tv-order-num">#{{ order.order_number }}</div>
+                    <div class="tv-table-num">Table {{ order.table.number }}</div>
+                    <div class="tv-items">
+                        {% for item in order.items.all %}
+                        <span class="tv-item">{{ item.menu_item.name }}{% if item.quantity > 1 %} ×{{ item.quantity }}{% endif %}</span>
+                        {% endfor %}
+                    </div>
+                    <div class="tv-ready-label">🎉 Your order is ready!</div>
+                </div>
+                {% empty %}
+                <div class="tv-empty-col" id="readyEmpty">
+                    <span>⏳ No orders ready yet</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Live clock
+    function updateClock() {
+        document.getElementById('tvClock').textContent = new Date().toLocaleTimeString('en-IN', {
+            hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
+        });
+    }
+    setInterval(updateClock, 1000); updateClock();
+
+    // Theme Toggle logic
+    function toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        
+        const icon = document.getElementById('themeToggleIcon');
+        if (icon) {
+            icon.className = newTheme === 'dark' ? 'bi bi-moon-stars-fill' : 'bi bi-sun-fill';
+        }
+    }
+    
+    // Sync theme icon on load
+    document.addEventListener('DOMContentLoaded', () => {
+        const icon = document.getElementById('themeToggleIcon');
+        if (icon) {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+            icon.className = currentTheme === 'dark' ? 'bi bi-moon-stars-fill' : 'bi bi-sun-fill';
+        }
+    });
+
+    // WebSocket for real-time updates
+    const ws = new WebSocket(`ws://${window.location.host}/ws/tv/`);
+    ws.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        if (data.type === 'order_update' || data.type === 'new_order') {
+            // Reload page to reflect changes
+            setTimeout(() => location.reload(), 1000);
+        }
+    };
+    ws.onerror = function() {
+        // Fallback: auto-refresh every 10 seconds
+        setInterval(() => location.reload(), 10000);
+    };
+    </script>
+</body>
+</html>

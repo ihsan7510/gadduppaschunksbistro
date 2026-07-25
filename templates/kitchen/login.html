@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}Kitchen Login — {{ settings.restaurant_name }}{% endblock %}
+
+{% block body %}
+<div class="login-page kitchen-login">
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="brand-icon">👨‍🍳</div>
+                <h1>Kitchen</h1>
+                <p>{{ settings.restaurant_name }}</p>
+            </div>
+            {% if error %}
+            <div class="alert-error"><i class="bi bi-exclamation-triangle"></i> {{ error }}</div>
+            {% endif %}
+            <form method="post" class="login-form">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>Kitchen Password</label>
+                    <div class="input-icon">
+                        <i class="bi bi-lock-fill"></i>
+                        <input type="password" name="password" placeholder="Enter password" required autofocus>
+                    </div>
+                </div>
+                <button type="submit" class="btn-login">
+                    <i class="bi bi-fire"></i> Enter Kitchen
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

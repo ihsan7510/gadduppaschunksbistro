@@ -1,0 +1,61 @@
+{% extends 'admin_panel/base.html' %}
+{% block page_title %}Menu{% endblock %}
+{% block header_title %}Menu Management{% endblock %}
+
+{% block content %}
+<div class="page-toolbar">
+    <a href="{% url 'admin_panel:menu_create' %}" class="btn-primary-sm"><i class="bi bi-plus-lg"></i> Add Item</a>
+    <a href="{% url 'admin_panel:category_list' %}" class="btn-secondary-sm"><i class="bi bi-tags"></i> Categories</a>
+</div>
+
+{% for category in categories %}
+{% if category.items.all %}
+<div class="card-panel mb-16">
+    <div class="panel-header">
+        <h3>{{ category.icon }} {{ category.name }}</h3>
+        <span class="item-count">{{ category.items.count }} items</span>
+    </div>
+    <div class="panel-body">
+        <div class="menu-grid">
+            {% for item in category.items.all %}
+            <div class="menu-item-card {% if not item.is_available %}unavailable{% endif %}">
+                {% if item.image %}
+                <img src="{{ item.image.url }}" alt="{{ item.name }}" class="menu-item-img">
+                {% else %}
+                <div class="menu-item-img-placeholder">🍽️</div>
+                {% endif %}
+                <div class="menu-item-info">
+                    <div class="menu-item-name">
+                        <span class="veg-dot {% if item.is_veg %}veg{% else %}non-veg{% endif %}"></span>
+                        {{ item.name }}
+                    </div>
+                    <div class="menu-item-price">₹{{ item.price }}</div>
+                    <div class="menu-item-meta">
+                        <span>⏱ {{ item.preparation_time }}min</span>
+                        <span class="{% if item.is_available %}avail{% else %}unavail{% endif %}">
+                            {% if item.is_available %}Available{% else %}Unavailable{% endif %}
+                        </span>
+                    </div>
+                    <div class="menu-item-actions">
+                        <a href="{% url 'admin_panel:menu_edit' item.pk %}" class="btn-edit-sm"><i class="bi bi-pencil"></i></a>
+                        <form method="post" action="{% url 'admin_panel:menu_delete' item.pk %}" style="display:inline" onsubmit="return confirm('Delete {{ item.name }}?')">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-delete-sm"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endfor %}
+
+{% if not categories %}
+<div class="empty-state">
+    <i class="bi bi-menu-button-wide" style="font-size:3rem;opacity:.3"></i>
+    <p>No menu items yet. <a href="{% url 'admin_panel:category_list' %}">Add a category first</a>, then add items.</p>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% block title %}{% block page_title %}Admin Panel{% endblock %} — {{ settings.restaurant_name }}{% endblock %}
+
+{% block body %}
+<div class="admin-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <span class="brand-icon">🍴</span>
+            <span class="brand-name">{{ settings.restaurant_name }}</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="{% url 'admin_panel:dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                <i class="bi bi-speedometer2"></i><span>Dashboard</span>
+            </a>
+            <div class="nav-section">Staff</div>
+            <a href="{% url 'admin_panel:staff_list' %}" class="nav-item {% if 'staff' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="bi bi-people-fill"></i><span>Staff</span>
+            </a>
+            <a href="{% url 'admin_panel:attendance' %}" class="nav-item {% if 'attendance' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="bi bi-calendar-check-fill"></i><span>Attendance</span>
+            </a>
+            <div class="nav-section">Operations</div>
+            <a href="{% url 'admin_panel:table_list' %}" class="nav-item {% if 'table' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="bi bi-grid-3x3-gap-fill"></i><span>Tables</span>
+            </a>
+            <a href="{% url 'admin_panel:menu_list' %}" class="nav-item {% if 'menu' in request.resolver_match.url_name or 'category' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="bi bi-menu-button-wide-fill"></i><span>Menu</span>
+            </a>
+            <a href="{% url 'admin_panel:inventory_list' %}" class="nav-item {% if 'inventory' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="bi bi-box-seam-fill"></i><span>Inventory</span>
+            </a>
+            <a href="{% url 'admin_panel:billing_list' %}" class="nav-item {% if 'billing' in request.resolver_match.url_name or 'bill' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="bi bi-receipt-cutoff"></i><span>Billing</span>
+            </a>
+            <div class="nav-section">System</div>
+            <a href="{% url 'admin_panel:settings' %}" class="nav-item {% if 'settings' in request.resolver_match.url_name %}active{% endif %}">
+                <i class="bi bi-gear-fill"></i><span>Settings</span>
+            </a>
+        </nav>
+        <div class="sidebar-bottom">
+            <div class="module-links">
+                <a href="{% url 'waiter:login' %}" target="_blank"><i class="bi bi-person-badge"></i> Waiter</a>
+                <a href="{% url 'kitchen:login' %}" target="_blank"><i class="bi bi-fire"></i> Kitchen</a>
+                <a href="{% url 'tv_display:display' %}" target="_blank"><i class="bi bi-tv"></i> TV</a>
+            </div>
+            <a href="{% url 'admin_panel:logout' %}" class="btn-logout">
+                <i class="bi bi-box-arrow-left"></i> Logout
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+        <header class="admin-header">
+            <button class="sidebar-toggle" onclick="toggleSidebar()">
+                <i class="bi bi-list"></i>
+            </button>
+            <div class="header-title">{% block header_title %}Dashboard{% endblock %}</div>
+            <button class="theme-toggle-btn me-2" onclick="toggleTheme()" title="Toggle Light/Dark Mode">
+                <i id="themeToggleIcon" class="bi bi-moon-stars-fill"></i>
+            </button>
+            <div class="header-time" id="headerTime"></div>
+        </header>
+
+        {% if messages %}
+        <div class="messages-container">
+            {% for message in messages %}
+            <div class="alert-toast alert-{{ message.tags }}">
+                {{ message }}
+                <button onclick="this.parentElement.remove()">×</button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="admin-content">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+</div>
+
+<script>
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('collapsed');
+}
+// Live clock
+function updateTime() {
+    const el = document.getElementById('headerTime');
+    if (el) el.textContent = new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+}
+setInterval(updateTime, 1000);
+updateTime();
+// Auto-dismiss alerts
+setTimeout(() => {
+    document.querySelectorAll('.alert-toast').forEach(el => el.remove());
+}, 4000);
+</script>
+{% block extra_js %}{% endblock %}
+{% endblock %}

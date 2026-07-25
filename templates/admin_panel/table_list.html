@@ -1,0 +1,34 @@
+{% extends 'admin_panel/base.html' %}
+{% block page_title %}Tables{% endblock %}
+{% block header_title %}Table Management{% endblock %}
+
+{% block content %}
+<div class="page-toolbar">
+    <a href="{% url 'admin_panel:table_create' %}" class="btn-primary-sm"><i class="bi bi-plus-lg"></i> Add Table</a>
+</div>
+<div class="table-grid-admin">
+    {% for table in tables %}
+    <div class="table-admin-card status-{{ table.status }}">
+        <div class="table-number">{{ table.number }}</div>
+        <div class="table-name">{{ table.name|default:"Table" }}</div>
+        <div class="table-meta">
+            <span><i class="bi bi-people"></i> {{ table.capacity }}</span>
+            <span>{{ table.location }}</span>
+        </div>
+        <div class="table-status-badge {{ table.status }}">{{ table.get_status_display }}</div>
+        <div class="table-actions">
+            <a href="{% url 'admin_panel:table_edit' table.pk %}" class="btn-edit-sm"><i class="bi bi-pencil"></i> Edit</a>
+            <form method="post" action="{% url 'admin_panel:table_delete' table.pk %}" style="display:inline" onsubmit="return confirm('Delete Table {{ table.number }}?')">
+                {% csrf_token %}
+                <button type="submit" class="btn-delete-sm"><i class="bi bi-trash"></i></button>
+            </form>
+        </div>
+    </div>
+    {% empty %}
+    <div class="empty-state">
+        <i class="bi bi-grid-3x3-gap" style="font-size:3rem;opacity:.3"></i>
+        <p>No tables added yet. <a href="{% url 'admin_panel:table_create' %}">Add one</a></p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

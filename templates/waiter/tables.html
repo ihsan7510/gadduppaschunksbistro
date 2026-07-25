@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% block title %}Tables — {{ settings.restaurant_name }}{% endblock %}
+
+{% block body %}
+<div class="waiter-layout">
+    <header class="waiter-header">
+        <div class="waiter-brand">
+            <span>🧑‍🍽️</span>
+            <span>{{ settings.restaurant_name }}</span>
+        </div>
+        <div class="waiter-info">
+            <span class="waiter-badge"><i class="bi bi-person-fill"></i> {{ waiter_name }}</span>
+            <button class="theme-toggle-btn py-1 px-2" onclick="toggleTheme()" title="Toggle Light/Dark Mode" style="font-size: 0.95rem; height: 32px;">
+                <i id="themeToggleIcon" class="bi bi-moon-stars-fill"></i>
+            </button>
+            <div class="header-time" id="headerTime"></div>
+            <a href="{% url 'waiter:logout' %}" class="btn-logout-sm">Logout</a>
+        </div>
+    </header>
+
+    <div class="waiter-content">
+        <div class="section-title">
+            <h2>Table Selection</h2>
+            <div class="table-legend">
+                <span class="leg-dot free"></span>Free
+                <span class="leg-dot occupied"></span>Occupied
+                <span class="leg-dot reserved"></span>Reserved
+            </div>
+        </div>
+
+        <div class="table-grid-waiter">
+            {% for td in table_data %}
+            <div class="table-card-waiter status-{{ td.table.status }}" onclick="selectTable({{ td.table.pk }}, '{{ td.table.status }}', {{ td.active_order.pk|default:'null' }}, {{ td.bill_pk|default:'null' }})">
+                <div class="table-num">T{{ td.table.number }}</div>
+                <div class="table-capacity"><i class="bi bi-people"></i> {{ td.table.capacity }}</div>
+
+                {% if td.active_order %}
+                <div class="table-order-info">
+                    <div>#{{ td.active_order.order_number }}</div>
+                    <div class="order-status-pill {{ td.active_order.status }}">{{ td.active_order.get_status_display }}</div>
+                </div>
+
+                <!-- Direct action buttons on card -->
+                <div class="table-card-btns" onclick="event.stopPropagation()">
+                    {% if td.bill_pk %}
+                    {# Bill exists — show Bill (view) + Paid buttons #}
+                    <a href="/waiter/bills/{{ td.bill_pk }}/pay-quick/"
+                       class="tc-btn tc-btn-bill" title="View Bill">
+                        <i class="bi bi-receipt"></i> Bill
+                    </a>
+                    <a href="/waiter/bills/{{ td.bill_pk }}/pay-quick/"
+                       class="tc-btn tc-btn-paid" title="Collect Payment">
+                        <i class="bi bi-cash-coin"></i> Paid
+                    </a>
+                    {% else %}
+                    {# No bill yet — show Bill (generate) only #}
+                    <a href="/waiter/orders/{{ td.active_order.pk }}/bill/"
+                       class="tc-btn tc-btn-bill" title="Generate Bill">
+                        <i class="bi bi-receipt"></i> Bill
+                    </a>
+                    {% endif %}
+                </div>
+
+                {% else %}
+                <div class="table-free-label">Available</div>
+                {% endif %}
+
+                <div class="table-status-indicator"></div>
+            </div>
+            {% endfor %}
+        </div>
+
+    </div>
+</div>
+
+<!-- Table Action Modal -->
+<div class="modal-overlay" id="tableModal" onclick="if(event.target===this)closeModal()">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h4 id="modalTitle">Table Action</h4>
+            <button onclick="closeModal()">×</button>
+        </div>
+        <div class="modal-body" id="modalBody"></div>
+    </div>
+</div>
+
+<script>
+function updateTime() {
+    const el = document.getElementById('headerTime');
+    if(el) el.textContent = new Date().toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+setInterval(updateTime, 1000); updateTime();
+
+function selectTable(pk, status, orderId, billId) {
+    document.getElementById('modalTitle').textContent = 'Table ' + pk + ' Actions';
+    let body = '';
+    if (status === 'free') {
+        body = `<div class="modal-action-btns">
+            <a href="/waiter/tables/${pk}/order/" class="btn-modal-action green">
+                <i class="bi bi-plus-circle-fill"></i><span>New Order</span>
+            </a>
+        </div>`;
+    } else if (status === 'occupied' && orderId) {
+        let payBtn = '';
+        if (billId) {
+            // Bill already exists — show direct Pay button prominently
+            payBtn = `<a href="/waiter/bills/${billId}/pay-quick/" class="btn-modal-action gold" style="grid-column:1/-1">
+                <i class="bi bi-cash-coin"></i><span>Collect Payment</span>
+            </a>`;
+        }
+        body = `<div class="modal-action-btns">
+            <a href="/waiter/tables/${pk}/order/" class="btn-modal-action blue">
+                <i class="bi bi-plus-circle"></i><span>Add Items</span>
+            </a>
+            <a href="/waiter/orders/${orderId}/" class="btn-modal-action purple">
+                <i class="bi bi-eye-fill"></i><span>View Order</span>
+            </a>
+            <a href="/waiter/orders/${orderId}/bill/" class="btn-modal-action teal">
+                <i class="bi bi-receipt"></i><span>Generate Bill</span>
+            </a>
+            ${payBtn}
+        </div>`;
+    } else {
+        body = `<p class="text-muted text-center" style="padding:16px">Table is ${status}.</p>`;
+    }
+    document.getElementById('modalBody').innerHTML = body;
+    document.getElementById('tableModal').style.display = 'flex';
+}
+function closeModal() {
+    document.getElementById('tableModal').style.display = 'none';
+}
+</script>
+{% endblock %}

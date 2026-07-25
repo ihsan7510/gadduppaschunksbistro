@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% block title %}Bill — Table {{ order.table.number }} — {{ settings.restaurant_name }}{% endblock %}
+
+{% block body %}
+<div class="waiter-layout">
+    <header class="waiter-header">
+        <a href="{% url 'waiter:order_detail' order.pk %}" class="btn-back-header"><i class="bi bi-arrow-left"></i></a>
+        <div class="waiter-brand">Bill — Table {{ order.table.number }}</div>
+        <button class="theme-toggle-btn py-1 px-2" onclick="toggleTheme()" title="Toggle Light/Dark Mode" style="font-size: 0.95rem; height: 32px;">
+            <i id="themeToggleIcon" class="bi bi-moon-stars-fill"></i>
+        </button>
+    </header>
+    <div class="waiter-content">
+        <div class="bill-page">
+            <div class="receipt-card">
+                <div class="receipt-header">
+                    <h2>{{ settings.restaurant_name }}</h2>
+                    {% if settings.address %}<p>{{ settings.address }}</p>{% endif %}
+                    {% if settings.phone %}<p>📞 {{ settings.phone }}</p>{% endif %}
+                </div>
+                <div class="receipt-divider">- - - - - - - - - - - -</div>
+                <div class="receipt-info">
+                    <div><strong>Order:</strong> #{{ bill.order.order_number }}</div>
+                    <div><strong>Table:</strong> {{ bill.order.table.number }}</div>
+                    <div><strong>Waiter:</strong> {{ waiter_name }}</div>
+                    <div><strong>Date:</strong> {{ bill.created_at|date:"d M Y, h:i A" }}</div>
+                </div>
+                <div class="receipt-divider">- - - - - - - - - - - -</div>
+                <table class="receipt-items">
+                    <thead><tr><th>Item</th><th>Qty</th><th>Total</th></tr></thead>
+                    <tbody>
+                        {% for item in bill.order.items.all %}
+                        <tr>
+                            <td>{{ item.menu_item.name }}{% if item.notes %}<br><small>{{ item.notes }}</small>{% endif %}</td>
+                            <td>x{{ item.quantity }}</td>
+                            <td>₹{{ item.subtotal }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <div class="receipt-divider">- - - - - - - - - - - -</div>
+                <div class="receipt-totals">
+                    <div><span>Subtotal</span><span>₹{{ bill.subtotal }}</span></div>
+                    <div><span>Tax ({{ bill.tax_percent }}%)</span><span>₹{{ bill.tax_amount }}</span></div>
+                    {% if bill.discount_percent > 0 %}
+                    <div class="discount-row"><span>Discount ({{ bill.discount_percent }}%)</span><span>-₹{{ bill.discount_amount }}</span></div>
+                    {% endif %}
+                    <div class="total-row"><span>TOTAL</span><span>₹{{ bill.total }}</span></div>
+                </div>
+                <div class="receipt-footer">{{ settings.footer_message }}</div>
+            </div>
+
+            <!-- Payment Form -->
+            <div class="payment-form-card">
+                <h3><i class="bi bi-cash-coin"></i> Collect Payment</h3>
+                <form method="post" action="{% url 'waiter:mark_paid' bill.pk %}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label>Discount %</label>
+                        <input type="number" name="discount_percent" value="{{ bill.discount_percent }}" class="form-input-dark" min="0" max="100" step="0.5">
+                    </div>
+                    <div class="payment-methods">
+                        <label>Payment Method</label>
+                        <div class="payment-btn-group">
+                            <label class="pay-btn">
+                                <input type="radio" name="payment_method" value="cash" checked>
+                                <span><i class="bi bi-cash"></i> Cash</span>
+                            </label>
+                            <label class="pay-btn">
+                                <input type="radio" name="payment_method" value="card">
+                                <span><i class="bi bi-credit-card"></i> Card</span>
+                            </label>
+                            <label class="pay-btn">
+                                <input type="radio" name="payment_method" value="upi">
+                                <span><i class="bi bi-phone"></i> UPI</span>
+                            </label>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary-full btn-pay">
+                        <i class="bi bi-check-circle-fill"></i> Confirm Payment ₹{{ bill.total }}
+                    </button>
+                </form>
+                <a href="{% url 'waiter:print_bill' bill.pk %}" class="btn-print-full">
+                    <i class="bi bi-printer"></i> Print Bill
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

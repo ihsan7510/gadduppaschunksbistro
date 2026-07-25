@@ -1,0 +1,75 @@
+{% extends 'admin_panel/base.html' %}
+{% block page_title %}Billing{% endblock %}
+{% block header_title %}Billing & Reports{% endblock %}
+
+{% block content %}
+<div class="page-toolbar">
+    <form method="get" class="filter-form">
+        <input type="date" name="date" value="{{ request.GET.date }}" class="form-input-dark-sm">
+        <select name="paid" class="form-select-dark-sm">
+            <option value="">All Bills</option>
+            <option value="yes" {% if request.GET.paid == 'yes' %}selected{% endif %}>Paid Only</option>
+            <option value="no" {% if request.GET.paid == 'no' %}selected{% endif %}>Unpaid Only</option>
+        </select>
+        <button type="submit" class="btn-primary-sm">Filter</button>
+        <a href="{% url 'admin_panel:billing_list' %}" class="btn-secondary-sm">Clear</a>
+    </form>
+    <div class="revenue-badge">
+        Total Revenue: <strong>₹{{ total_revenue|floatformat:2 }}</strong>
+    </div>
+</div>
+
+<div class="card-panel">
+    <div class="panel-header">
+        <h3><i class="bi bi-receipt-cutoff"></i> Bills ({{ bills.count }})</h3>
+    </div>
+    <div class="panel-body">
+        <table class="data-table">
+            <thead>
+                <tr><th>Bill #</th><th>Order</th><th>Table</th><th>Date</th><th>Subtotal</th><th>Tax</th><th>Discount</th><th>Total</th><th>Payment</th><th>Status</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+                {% for bill in bills %}
+                <tr>
+                    <td>#{{ bill.pk }}</td>
+                    <td>#{{ bill.order.order_number }}</td>
+                    <td>T-{{ bill.order.table.number }}</td>
+                    <td>{{ bill.created_at|date:"d M h:i A" }}</td>
+                    <td>₹{{ bill.subtotal }}</td>
+                    <td>₹{{ bill.tax_amount }}</td>
+                    <td>₹{{ bill.discount_amount }}</td>
+                    <td><strong>₹{{ bill.total }}</strong></td>
+                    <td>{{ bill.get_payment_method_display }}</td>
+                    <td>
+                        {% if bill.is_paid %}
+                        <span class="badge-active">Paid</span>
+                        {% else %}
+                        <span class="badge-warning">Unpaid</span>
+                        {% endif %}
+                    </td>
+                    <td class="action-btns" style="display: flex; gap: 6px; align-items: center;">
+                        <a href="{% url 'admin_panel:bill_detail' bill.pk %}" class="btn-edit-sm" title="View"><i class="bi bi-eye"></i></a>
+                        <a href="{% url 'admin_panel:bill_print' bill.pk %}" class="btn-print-sm" title="Print"><i class="bi bi-printer"></i></a>
+                        {% if not bill.is_paid %}
+                        <form method="post" action="{% url 'admin_panel:bill_mark_paid' bill.pk %}" style="display: inline-flex; align-items: center; gap: 4px; margin: 0;">
+                            {% csrf_token %}
+                            <select name="payment_method" class="form-select-dark-sm" style="padding: 2px 6px; font-size: 0.75rem; width: auto; height: auto;">
+                                <option value="cash">Cash</option>
+                                <option value="card">Card</option>
+                                <option value="upi">UPI</option>
+                            </select>
+                            <button type="submit" class="btn-edit-sm" style="background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.2); color: var(--accent-green); padding: 3px 8px; font-size: 0.75rem;" title="Mark as Paid">
+                                <i class="bi bi-check-lg"></i> Paid
+                            </button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="11" class="text-center text-muted">No bills found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends 'admin_panel/base.html' %}
+{% block page_title %}{{ title }}{% endblock %}
+{% block header_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="form-page">
+    <a href="{% url 'admin_panel:table_list' %}" class="btn-back"><i class="bi bi-arrow-left"></i> Back</a>
+    <div class="card-panel">
+        <div class="panel-header"><h3><i class="bi bi-grid-3x3-gap-fill"></i> {{ title }}</h3></div>
+        <div class="panel-body">
+            <form method="post" class="styled-form">
+                {% csrf_token %}
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Table Number *</label>
+                        <input type="number" name="number" value="{{ table.number|default:'' }}" class="form-input-dark" required min="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Table Name/Label</label>
+                        <input type="text" name="name" value="{{ table.name|default:'' }}" class="form-input-dark" placeholder="e.g. Window Table">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Capacity (seats)</label>
+                        <input type="number" name="capacity" value="{{ table.capacity|default:4 }}" class="form-input-dark" min="1" max="20">
+                    </div>
+                    <div class="form-group">
+                        <label>Location</label>
+                        <input type="text" name="location" value="{{ table.location|default:'' }}" class="form-input-dark" placeholder="e.g. Indoor, Outdoor">
+                    </div>
+                </div>
+                {% if table %}
+                <div class="form-group">
+                    <label>Status</label>
+                    <select name="status" class="form-select-dark">
+                        {% for val, label in status_choices %}
+                        <option value="{{ val }}" {% if table.status == val %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+                <div class="form-actions">
+                    <a href="{% url 'admin_panel:table_list' %}" class="btn-secondary">Cancel</a>
+                    <button type="submit" class="btn-primary">Save Table</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

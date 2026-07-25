@@ -1,0 +1,82 @@
+{% extends 'admin_panel/base.html' %}
+{% block page_title %}Settings{% endblock %}
+{% block header_title %}Restaurant Settings{% endblock %}
+
+{% block content %}
+<div class="form-page">
+    <div class="card-panel">
+        <div class="panel-header"><h3><i class="bi bi-gear-fill"></i> Restaurant Configuration</h3></div>
+        <div class="panel-body">
+            <form method="post" enctype="multipart/form-data" class="styled-form">
+                {% csrf_token %}
+                <div class="settings-section">
+                    <h4 class="settings-section-title">🏠 Restaurant Info</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Restaurant Name</label>
+                            <input type="text" name="restaurant_name" value="{{ s.restaurant_name }}" class="form-input-dark" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Phone Number</label>
+                            <input type="text" name="phone" value="{{ s.phone }}" class="form-input-dark">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Address</label>
+                        <textarea name="address" class="form-textarea-dark" rows="2">{{ s.address }}</textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>GSTIN</label>
+                            <input type="text" name="gstin" value="{{ s.gstin }}" class="form-input-dark">
+                        </div>
+                        <div class="form-group">
+                            <label>Currency Symbol</label>
+                            <input type="text" name="currency_symbol" value="{{ s.currency_symbol }}" class="form-input-dark" maxlength="5">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Logo</label>
+                        {% if s.logo %}<img src="{{ s.logo.url }}" alt="Logo" style="width:80px;border-radius:8px;margin-bottom:8px;display:block;">{% endif %}
+                        <input type="file" name="logo" class="form-input-dark" accept="image/*">
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h4 class="settings-section-title">💰 Billing</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Default Tax %</label>
+                            <input type="number" name="tax_percent" value="{{ s.tax_percent }}" class="form-input-dark" step="0.01" min="0" max="100">
+                        </div>
+                        <div class="form-group">
+                            <label>Receipt Footer Message</label>
+                            <input type="text" name="footer_message" value="{{ s.footer_message }}" class="form-input-dark">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h4 class="settings-section-title">🖨️ Thermal Printer</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Bluetooth MAC Address</label>
+                            <input type="text" name="printer_mac" value="{{ s.printer_mac }}" class="form-input-dark" placeholder="e.g. 00:11:22:33:44:55">
+                            <small>For Bluetooth thermal printers</small>
+                        </div>
+                        <div class="form-group">
+                            <label>USB/Serial Port</label>
+                            <input type="text" name="printer_port" value="{{ s.printer_port }}" class="form-input-dark" placeholder="e.g. COM3 or /dev/usb/lp0">
+                            <small>For USB thermal printers</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary"><i class="bi bi-check-circle"></i> Save Settings</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
