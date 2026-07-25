@@ -315,3 +315,47 @@ def pay_quick(request, bill_pk):
         'waiter_name': request.session.get('waiter_name'),
         'settings': settings_obj,
     })
+
+
+@waiter_required
+def mark_order_served(request, order_pk):
+    if request.method == 'POST':
+        order = get_object_or_404(Order, pk=order_pk)
+        order.status = 'served'
+        order.items.all().update(status='served')
+        order.save()
+        
+        # Broadcast to TV display and kitchen via WebSocket
+        from channels.layers import get_channel_layer
+        from asgiref.sync import async_to_sync
+        channel_layer = get_channel_layer()
+        try:
+            async_to_sync(channel_layer.group_send)(
+                'tv_display',
+                {
+                    'type': 'order_update',
+                    'order_id': order.pk,
+                    'order_number': order.order_number,
+                    'table_number': order.table.number,
+                    'status': 'served',
+                }
+            )
+        except Exception:
+            pass
+            
+        try:
+            async_to_sync(channel_layer.group_send)(
+                'kitchen_orders',
+                {
+                    'type': 'order_update',
+                    'order_id': order.pk,
+                    'order_number': order.order_number,
+                    'status': 'served',
+                }
+            )
+        except Exception:
+            pass
+
+        messages.success(request, f'Order #{order.order_number} marked as served.')
+    return redirect('waiter:order_detail', order_pk=order_pk)
+

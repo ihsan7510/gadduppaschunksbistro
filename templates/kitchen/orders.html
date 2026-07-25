@@ -83,23 +83,31 @@
 </audio>
 
 <script>
-// WebSocket connection
-const ws = new WebSocket(`ws://${window.location.host}/ws/kitchen/`);
+// WebSocket connection with auto-reconnect
+function connectWS() {
+    const ws = new WebSocket(`ws://${window.location.host}/ws/kitchen/`);
+    ws.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        if (data.type === 'new_order') {
+            playAlert();
+            showNewOrderBanner(data.order_number, data.table_number);
+            setTimeout(() => location.reload(), 2000);
+        }
+    };
+    ws.onclose = function() {
+        console.log('Kitchen WS closed, reconnecting in 3s...');
+        setTimeout(connectWS, 3000);
+    };
+    ws.onerror = function() {
+        console.log('Kitchen WS error');
+    };
+}
+connectWS();
 
-ws.onmessage = function(e) {
-    const data = JSON.parse(e.data);
-    if (data.type === 'new_order') {
-        // Play sound and reload orders
-        playAlert();
-        showNewOrderBanner(data.order_number, data.table_number);
-        setTimeout(() => location.reload(), 2000);
-    }
-};
-
-ws.onerror = function() {
-    console.log('Kitchen WS not available, using polling.');
-    setInterval(() => location.reload(), 15000); // Fallback polling
-};
+// Fallback auto-refresh every 8 seconds to guarantee live updates
+setInterval(() => {
+    location.reload();
+}, 8000);
 
 function playAlert() {
     try {

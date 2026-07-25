@@ -141,19 +141,29 @@
         }
     });
 
-    // WebSocket for real-time updates
-    const ws = new WebSocket(`ws://${window.location.host}/ws/tv/`);
-    ws.onmessage = function(e) {
-        const data = JSON.parse(e.data);
-        if (data.type === 'order_update' || data.type === 'new_order') {
-            // Reload page to reflect changes
-            setTimeout(() => location.reload(), 1000);
-        }
-    };
-    ws.onerror = function() {
-        // Fallback: auto-refresh every 10 seconds
-        setInterval(() => location.reload(), 10000);
-    };
+    // WebSocket for real-time updates with auto-reconnect
+    function connectWS() {
+        const ws = new WebSocket(`ws://${window.location.host}/ws/tv/`);
+        ws.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            if (data.type === 'order_update' || data.type === 'new_order') {
+                setTimeout(() => location.reload(), 1000);
+            }
+        };
+        ws.onclose = function() {
+            console.log('TV WS closed, reconnecting in 3s...');
+            setTimeout(connectWS, 3000);
+        };
+        ws.onerror = function() {
+            console.log('TV WS error');
+        };
+    }
+    connectWS();
+
+    // Fallback: auto-refresh every 5 seconds to ensure TV display is always live
+    setInterval(() => {
+        location.reload();
+    }, 5000);
     </script>
 </body>
 </html>

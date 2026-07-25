@@ -36,6 +36,14 @@
         </div>
 
         <div class="order-action-btns">
+            {% if order.status != 'served' and order.status != 'billed' and order.status != 'cancelled' %}
+            <form method="post" action="{% url 'waiter:mark_served' order.pk %}" style="display: inline-block; width: 100%;">
+                {% csrf_token %}
+                <button type="submit" class="btn-success" style="width: 100%; display: flex; justify-content: center; margin-bottom: 8px;">
+                    <i class="bi bi-check-circle-fill"></i> Mark Served
+                </button>
+            </form>
+            {% endif %}
             <a href="{% url 'waiter:take_order' order.table.pk %}" class="btn-secondary">
                 <i class="bi bi-plus-circle"></i> Add More Items
             </a>
