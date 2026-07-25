@@ -58,10 +58,14 @@
 
                 <div class="settings-section">
                     <h4 class="settings-section-title">🖨️ Thermal Printer</h4>
-                    <div class="form-row">
                         <div class="form-group">
                             <label>Bluetooth MAC Address</label>
-                            <input type="text" name="printer_mac" value="{{ s.printer_mac }}" class="form-input-dark" placeholder="e.g. 00:11:22:33:44:55">
+                            <div style="display: flex; gap: 8px;">
+                                <input type="text" id="printer_mac" name="printer_mac" value="{{ s.printer_mac }}" class="form-input-dark" placeholder="e.g. 00:11:22:33:44:55">
+                                <button type="button" class="btn-secondary" id="btnScanBluetooth" style="padding: 0 16px; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;" data-bs-toggle="modal" data-bs-target="#bluetoothModal">
+                                    <i class="bi bi-bluetooth"></i> Scan / Pair
+                                </button>
+                            </div>
                             <small>For Bluetooth thermal printers</small>
                         </div>
                         <div class="form-group">
@@ -79,4 +83,167 @@
         </div>
     </div>
 </div>
+
+<!-- Bluetooth Scan Modal -->
+<div class="modal fade" id="bluetoothModal" tabindex="-1" aria-labelledby="bluetoothModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background: var(--bg-card); border: 1px solid var(--border-light); color: var(--text-primary); border-radius: var(--radius-lg);">
+            <div class="modal-header" style="border-bottom: 1px solid var(--border);">
+                <h5 class="modal-title" id="bluetoothModalLabel"><i class="bi bi-bluetooth" style="color: var(--accent-purple);"></i> Bluetooth Devices</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-secondary small mb-3">Scan and pair bluetooth devices on the local machine or using Web Bluetooth in your browser.</p>
+                
+                <div class="d-flex gap-2 mb-3">
+                    <button type="button" class="btn-primary" id="btnServerScan" style="flex: 1; justify-content: center; font-size: 0.85rem; padding: 8px 12px;">
+                        <i class="bi bi-cpu"></i> Scan Local PC
+                    </button>
+                    <button type="button" class="btn-secondary" id="btnBrowserScan" style="flex: 1; justify-content: center; font-size: 0.85rem; padding: 8px 12px;">
+                        <i class="bi bi-browser-chrome"></i> Web Bluetooth
+                    </button>
+                </div>
+
+                <div id="scanStatus" class="text-center py-3 d-none">
+                    <div class="spinner-border text-primary spinner-border-sm mb-2" role="status"></div>
+                    <div class="small text-secondary">Scanning for Bluetooth devices... Please wait.</div>
+                </div>
+
+                <div id="deviceListContainer">
+                    <ul class="list-group" id="bluetoothDeviceList" style="max-height: 250px; overflow-y: auto; padding: 0;">
+                        <li class="list-group-item text-center text-muted py-3" style="background: transparent; border: 1px solid var(--border); color: var(--text-muted) !important;">
+                            No devices scanned yet. Click one of the scan options above.
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid var(--border);">
+                <button type="button" class="btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const btnServerScan = document.getElementById('btnServerScan');
+    const btnBrowserScan = document.getElementById('btnBrowserScan');
+    const scanStatus = document.getElementById('scanStatus');
+    const deviceList = document.getElementById('bluetoothDeviceList');
+    const printerMacInput = document.getElementById('printer_mac');
+    const bluetoothModalEl = document.getElementById('bluetoothModal');
+    let modalInstance = null;
+
+    btnServerScan.addEventListener('click', async function() {
+        scanStatus.classList.remove('d-none');
+        deviceList.innerHTML = '';
+        
+        try {
+            const response = await fetch("{% url 'admin_panel:scan_bluetooth' %}");
+            const data = await response.json();
+            
+            scanStatus.classList.add('d-none');
+            
+            if (data.success && data.devices && data.devices.length > 0) {
+                deviceList.innerHTML = '';
+                data.devices.forEach(device => {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                    li.style.background = 'var(--bg-secondary)';
+                    li.style.border = '1px solid var(--border)';
+                    li.style.marginBottom = '6px';
+                    li.style.borderRadius = 'var(--radius-sm)';
+                    li.style.color = 'var(--text-primary)';
+                    
+                    li.innerHTML = `
+                        <div>
+                            <strong style="color: var(--text-primary);">${device.name}</strong>
+                            <div class="small text-secondary">${device.mac}</div>
+                        </div>
+                        <button type="button" class="btn-primary-sm btn-select-device" data-mac="${device.mac}" style="padding: 4px 10px; font-size: 0.8rem;">Select</button>
+                    `;
+                    deviceList.appendChild(li);
+                });
+
+                // Add event listeners to Select buttons
+                document.querySelectorAll('.btn-select-device').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        printerMacInput.value = this.dataset.mac;
+                        if (!modalInstance) {
+                            modalInstance = bootstrap.Modal.getInstance(bluetoothModalEl);
+                        }
+                        if (modalInstance) {
+                            modalInstance.hide();
+                        }
+                    });
+                });
+            } else {
+                deviceList.innerHTML = `
+                    <li class="list-group-item text-center text-muted py-3" style="background: transparent; border: 1px solid var(--border);">
+                        No Bluetooth devices found. Please ensure Bluetooth is enabled and devices are discoverable.
+                    </li>
+                `;
+            }
+        } catch (err) {
+            console.error(err);
+            scanStatus.classList.add('d-none');
+            deviceList.innerHTML = `
+                <li class="list-group-item text-center text-danger py-3" style="background: transparent; border: 1px solid var(--border);">
+                    An error occurred while scanning.
+                </li>
+            `;
+        }
+    });
+
+    btnBrowserScan.addEventListener('click', async function() {
+        if (!navigator.bluetooth) {
+            alert("Web Bluetooth is not supported by your browser or requires HTTPS.");
+            return;
+        }
+
+        try {
+            const device = await navigator.bluetooth.requestDevice({
+                acceptAllDevices: true
+            });
+            
+            scanStatus.classList.add('d-none');
+            deviceList.innerHTML = '';
+            
+            const li = document.createElement('li');
+            li.className = 'list-group-item d-flex justify-content-between align-items-center';
+            li.style.background = 'var(--bg-secondary)';
+            li.style.border = '1px solid var(--border)';
+            li.style.marginBottom = '6px';
+            li.style.borderRadius = 'var(--radius-sm)';
+            li.style.color = 'var(--text-primary)';
+            
+            li.innerHTML = `
+                <div>
+                    <strong style="color: var(--text-primary);">${device.name || 'Unnamed Device'}</strong>
+                    <div class="small text-secondary">Paired / Authorized via Browser</div>
+                </div>
+                <span class="badge bg-success">Authorized</span>
+            `;
+            deviceList.appendChild(li);
+            
+            // Connect GATT server to initiate connection/pairing
+            try {
+                await device.gatt.connect();
+            } catch (gattErr) {
+                console.log("GATT connection skipped or not supported, but device authorized.", gattErr);
+            }
+            
+            alert(`Authorized device: ${device.name || 'Unnamed Device'}. You can now run a "Scan Local PC" to discover its hardware address.`);
+        } catch (err) {
+            console.error(err);
+            if (err.name !== 'NotFoundError') {
+                alert("Browser scan failed: " + err.message);
+            }
+        }
+    });
+});
+</script>
 {% endblock %}
+{% endblock %}
+

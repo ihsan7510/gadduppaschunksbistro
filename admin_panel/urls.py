@@ -38,4 +38,6 @@ urlpatterns = [
     path('billing/<int:pk>/pay/', views.bill_mark_paid, name='bill_mark_paid'),
     # Settings
     path('settings/', views.settings_view, name='settings'),
+    path('settings/scan-bluetooth/', views.scan_bluetooth, name='scan_bluetooth'),
 ]
+

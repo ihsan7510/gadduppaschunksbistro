@@ -475,3 +475,49 @@ def settings_view(request):
         messages.success(request, 'Settings saved successfully!')
         return redirect('admin_panel:settings')
     return render(request, 'admin_panel/settings.html', {'s': obj, 'settings': obj})
+
+
+@admin_required
+def scan_bluetooth(request):
+    """Scan and return bluetooth devices."""
+    devices = []
+    
+    # 1. Try PyBluez if installed
+    try:
+        import bluetooth
+        nearby_devices = bluetooth.discover_devices(duration=4, lookup_names=True, flush_cache=True, lookup_class=False)
+        for addr, name in nearby_devices:
+            devices.append({'name': name, 'mac': addr})
+    except Exception:
+        pass
+
+    # 2. Try Windows PowerShell since OS is Windows
+    if not devices:
+        try:
+            import subprocess
+            import json
+            import re
+            cmd = ["powershell", "-Command", "Get-PnpDevice -Class Bluetooth | Select-Object FriendlyName, InstanceId | ConvertTo-Json"]
+            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+            if proc.returncode == 0 and proc.stdout.strip():
+                stdout_str = proc.stdout.strip()
+                data = json.loads(stdout_str)
+                if not isinstance(data, list):
+                    data = [data]
+                seen_macs = set()
+                for item in data:
+                    name = item.get('FriendlyName', 'Unknown Device')
+                    inst_id = item.get('InstanceId', '')
+                    # Extract MAC from DEV_XXXXXXXXXXXX or BLUETOOTHDEVICE_XXXXXXXXXXXX
+                    match = re.search(r'(?:DEV_|BLUETOOTHDEVICE_)([0-9A-Fa-f]{12})', inst_id)
+                    if match:
+                        mac_raw = match.group(1)
+                        mac = ":".join(mac_raw[i:i+2] for i in range(0, 12, 2)).upper()
+                        if mac not in seen_macs:
+                            seen_macs.add(mac)
+                            devices.append({'name': name, 'mac': mac})
+        except Exception:
+            pass
+
+    return JsonResponse({'success': True, 'devices': devices})
+
