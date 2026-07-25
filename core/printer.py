@@ -144,9 +144,9 @@ def print_bill(bill, settings_obj=None):
 
 def generate_receipt_text(bill, settings_obj=None):
     """Generate receipt as plain text (for display when no printer)."""
-    name = settings_obj.restaurant_name if settings_obj else "Gadduppas"
-    addr = settings_obj.address if settings_obj else "Ashokapuram, Calicut"
-    phone = settings_obj.phone if settings_obj else "9048444991"
+    name = settings_obj.restaurant_name if settings_obj else "GADDUPPAS CHUNKS BISTRO"
+    addr = settings_obj.address if settings_obj else "Ashokapuram"
+    phone = settings_obj.phone if settings_obj else "+91 9048444991"
     
     lines = [
         name.center(32),

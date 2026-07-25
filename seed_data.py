@@ -16,12 +16,12 @@ print("🌱 Seeding restaurant data...")
 
 # Restaurant Settings
 settings, _ = RestaurantSettings.objects.get_or_create(pk=1)
-settings.restaurant_name = "Spice Garden Restaurant"
-settings.address = "123 Main Street, Chennai - 600001"
-settings.phone = "+91 98765 43210"
-settings.gstin = "33ABCDE1234F1Z5"
+settings.restaurant_name = "GADDUPPAS CHUNKS BISTRO"
+settings.address = "Ashokapuram"
+settings.phone = "+91 9048444991"
+settings.gstin = ""
 settings.tax_percent = 5.00
-settings.footer_message = "Thank you for dining with us! Visit again! 😊"
+settings.footer_message = "FOOD SHOULD BE CONSUMED WITH IN 1 HOURS OF DELIVERY IN HYGIENIC ENVIRONMENT"
 settings.currency_symbol = "₹"
 settings.save()
 print("✅ Restaurant settings saved")
