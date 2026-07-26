@@ -5,6 +5,54 @@ Uses python-escpos library for ESC/POS thermal printers.
 
 import datetime
 from decimal import Decimal
+import socket
+from escpos.escpos import Escpos
+
+
+class BluetoothPrinter(Escpos):
+    """
+    Custom Bluetooth Printer class that uses Python's native socket support
+    for AF_BLUETOOTH. This bypasses the pybluez dependency on Windows.
+    """
+    def __init__(self, mac, port=1, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.mac = mac
+        self.port = port
+        self.socket = None
+        self.open()
+
+    def open(self):
+        if not self.socket:
+            if not hasattr(socket, 'AF_BLUETOOTH'):
+                raise OSError("Bluetooth (AF_BLUETOOTH) is not supported on this platform/environment.")
+            
+            # Form socket connection
+            bt_proto = getattr(socket, 'BTPROTO_RFCOMM', 3)
+            self.socket = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM, bt_proto)
+            self.socket.settimeout(10)
+            
+            # Format MAC address correctly to have colons if it doesn't
+            mac_formatted = self.mac
+            if len(mac_formatted) == 12 and ':' not in mac_formatted:
+                mac_formatted = ":".join(mac_formatted[i:i+2] for i in range(0, 12, 2)).upper()
+            
+            self.socket.connect((mac_formatted, self.port))
+
+    def _raw(self, msg: bytes) -> None:
+        if not self.socket:
+            self.open()
+        self.socket.sendall(msg)
+
+    def close(self):
+        if self.socket:
+            try:
+                self.socket.close()
+            except Exception:
+                pass
+            self.socket = None
+
+    def __del__(self):
+        self.close()
 
 
 def get_printer(settings_obj=None):
@@ -13,12 +61,11 @@ def get_printer(settings_obj=None):
     Returns None if no printer configured or connection fails.
     """
     try:
-        from escpos.printer import Bluetooth, Usb, Serial
+        from escpos.printer import Usb, Serial
         
         if settings_obj and settings_obj.printer_mac:
             # Bluetooth printer
-            mac = settings_obj.printer_mac.replace(':', '').replace('-', '')
-            p = Bluetooth(settings_obj.printer_mac)
+            p = BluetoothPrinter(settings_obj.printer_mac)
             return p
         elif settings_obj and settings_obj.printer_port:
             # USB/Serial printer  
@@ -138,8 +185,14 @@ def print_bill(bill, settings_obj=None):
             return True, "Bill printed successfully!"
         except Exception as e:
             return False, f"Print error: {str(e)}"
+        finally:
+            try:
+                printer.close()
+            except Exception:
+                pass
     else:
         return False, receipt_text  # Return text for display
+
 
 
 def generate_receipt_text(bill, settings_obj=None):
