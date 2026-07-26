@@ -140,9 +140,9 @@ def format_bill_receipt(printer, bill, settings_obj=None):
     # QR code section
     printer.text("\n")
     try:
-        # If we have a UPI QR generator, we can print QR code directly to printer.
-        # Since we don't have the library setup or UPI ID yet, we'll try to generate a QR using escpos qr API if supported.
-        printer.qr(f"upi://pay?pa=merchant@upi&pn={settings_obj.restaurant_name if settings_obj else 'Gadduppas'}&am={bill.total}&cu=INR", size=6)
+        upi_id = settings_obj.upi_id if (settings_obj and settings_obj.upi_id) else 'merchant@upi'
+        restaurant_name = settings_obj.restaurant_name if settings_obj else 'Gadduppas'
+        printer.qr(f"upi://pay?pa={upi_id}&pn={restaurant_name}&am={bill.total}&cu=INR", size=6)
     except Exception:
         printer.set(align='center')
         printer.text("[ QR Code to Pay ]\n")

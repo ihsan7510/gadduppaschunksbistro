@@ -495,6 +495,7 @@ def settings_view(request):
         obj.printer_port = request.POST.get('printer_port', '')
         obj.footer_message = request.POST.get('footer_message', obj.footer_message)
         obj.currency_symbol = request.POST.get('currency_symbol', '₹')
+        obj.upi_id = request.POST.get('upi_id', 'merchant@upi')
         if 'logo' in request.FILES:
             obj.logo = request.FILES['logo']
         obj.save()

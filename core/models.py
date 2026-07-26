@@ -244,6 +244,7 @@ class RestaurantSettings(models.Model):
     printer_port = models.CharField(max_length=50, blank=True, help_text='USB printer port e.g. /dev/usb/lp0')
     footer_message = models.CharField(max_length=200, default='Thank you for dining with us!')
     currency_symbol = models.CharField(max_length=5, default='₹')
+    upi_id = models.CharField(max_length=200, default='merchant@upi', blank=True)
 
     def __str__(self):
         return self.restaurant_name
