@@ -287,18 +287,30 @@ def generate_bill(request, order_pk):
 def print_bill(request, bill_pk):
     bill = get_object_or_404(Bill, pk=bill_pk)
     settings_obj = get_settings()
-    from core.printer import print_bill as do_print, generate_receipt_text
+    from core.printer import print_bill as do_print, generate_receipt_text, get_bill_escpos_bytes
+    import base64
+    
     success, message = do_print(bill, settings_obj)
     receipt_text = generate_receipt_text(bill, settings_obj)
+    
+    # Generate ESC/POS bytes in base64 format for browser-side Web Bluetooth printing
+    try:
+        raw_bytes = get_bill_escpos_bytes(bill, settings_obj)
+        escpos_bytes_b64 = base64.b64encode(raw_bytes).decode('utf-8')
+    except Exception as e:
+        print(f"Failed to generate ESC/POS bytes: {e}")
+        escpos_bytes_b64 = ""
     
     return render(request, 'waiter/print_result.html', {
         'bill': bill,
         'success': success,
         'message': message,
         'receipt_text': receipt_text,
+        'escpos_bytes_b64': escpos_bytes_b64,
         'waiter_name': request.session.get('waiter_name'),
         'settings': settings_obj,
     })
+
 
 
 @waiter_required

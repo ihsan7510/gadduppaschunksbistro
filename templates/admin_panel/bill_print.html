@@ -13,8 +13,163 @@
         <small>{{ message }}</small>
     </div>
     {% endif %}
+    
+    {% if not success and escpos_bytes_b64 %}
+    <div class="bluetooth-print-section mb-4" style="background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; margin: 15px 0;">
+        <h5 style="color: var(--text-primary); margin-top: 0; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+            <i class="bi bi-bluetooth" style="color: #0082fc;"></i> Print from Phone / Tablet
+        </h5>
+        <p class="small text-secondary mb-3">You can print directly to your paired Bluetooth thermal printer using your tablet/phone browser.</p>
+        
+        <button id="btnWebBluetoothPrint" class="btn-primary" style="background: #0082fc; border-color: #0082fc; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 12px; height: 44px; font-weight: 600;">
+            <i class="bi bi-printer-fill"></i> Print via Web Bluetooth
+        </button>
+        <div id="btPrintStatus" class="small text-secondary" style="display: none; padding: 6px 10px; background: rgba(0,0,0,0.2); border-radius: var(--radius-sm); font-family: monospace;"></div>
+    </div>
+    {% endif %}
+
     <div class="receipt-preview">
         <pre class="receipt-text">{{ receipt_text }}</pre>
     </div>
 </div>
+
+{% if not success and escpos_bytes_b64 %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const btnPrint = document.getElementById('btnWebBluetoothPrint');
+    const statusDiv = document.getElementById('btPrintStatus');
+    const b64Data = "{{ escpos_bytes_b64 }}";
+
+    if (!btnPrint) return;
+
+    function setStatus(msg, isError = false) {
+        statusDiv.style.display = 'block';
+        statusDiv.style.color = isError ? 'var(--accent-orange)' : 'var(--text-primary)';
+        statusDiv.innerText = msg;
+    }
+
+    async function doPrintJob(device) {
+        try {
+            setStatus(`Connecting to printer: ${device.name}...`);
+            const server = await device.gatt.connect();
+
+            setStatus("Locating print service...");
+            let service = null;
+            const serviceUUIDs = [
+                '0000ffe0-0000-1000-8000-00805f9b34fb',
+                '000018f0-0000-1000-8000-00805f9b34fb',
+                '00001101-0000-1000-8000-00805f9b34fb'
+            ];
+
+            for (const uuid of serviceUUIDs) {
+                try {
+                    service = await server.getPrimaryService(uuid);
+                    if (service) break;
+                } catch (e) {}
+            }
+
+            if (!service) {
+                try {
+                    const services = await server.getPrimaryServices();
+                    if (services.length > 0) {
+                        service = services[0];
+                    }
+                } catch (err) {
+                    throw new Error("Could not find any GATT service on the printer.");
+                }
+            }
+
+            if (!service) {
+                throw new Error("No print service discovered on device.");
+            }
+
+            setStatus("Acquiring printer characteristic...");
+            const characteristics = await service.getCharacteristics();
+            const writeChar = characteristics.find(c => c.properties.write || c.properties.writeWithoutResponse);
+
+            if (!writeChar) {
+                throw new Error("No writeable characteristic found on printer.");
+            }
+
+            setStatus("Preparing receipt payload...");
+            const binaryString = atob(b64Data);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+
+            setStatus("Sending print payload...");
+            const chunkSize = 20;
+            for (let i = 0; i < bytes.length; i += chunkSize) {
+                const chunk = bytes.slice(i, i + chunkSize);
+                if (writeChar.properties.writeWithoutResponse) {
+                    await writeChar.writeValueWithoutResponse(chunk);
+                } else {
+                    await writeChar.writeValue(chunk);
+                }
+                setStatus(`Sending print payload... ${Math.round((i / bytes.length) * 100)}%`);
+                await new Promise(r => setTimeout(r, 25));
+            }
+
+            setStatus("Receipt printed successfully!");
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 3000);
+        } catch (error) {
+            console.error("Web Bluetooth error:", error);
+            setStatus(`Error: ${error.message}`, true);
+        }
+    }
+
+    // Manual Print Event (Forces new device selection prompt)
+    btnPrint.addEventListener('click', async function() {
+        if (!navigator.bluetooth) {
+            alert("Web Bluetooth is not supported by your browser or requires HTTPS.");
+            return;
+        }
+
+        try {
+            setStatus("Scanning for Bluetooth printers...");
+            
+            const device = await navigator.bluetooth.requestDevice({
+                acceptAllDevices: true,
+                optionalServices: [
+                    '000018f0-0000-1000-8000-00805f9b34fb',
+                    '0000ffe0-0000-1000-8000-00805f9b34fb',
+                    '00001101-0000-1000-8000-00805f9b34fb'
+                ]
+            });
+
+            await doPrintJob(device);
+        } catch (error) {
+            console.error("Web Bluetooth scan error:", error);
+            setStatus(`Error: ${error.message}`, true);
+        }
+    });
+
+    // Auto-print on load if a device was already paired previously
+    if (navigator.bluetooth && navigator.bluetooth.getDevices) {
+        navigator.bluetooth.getDevices().then(devices => {
+            if (devices.length > 0) {
+                const savedMac = "{{ settings.printer_mac }}";
+                let targetDevice = devices[0];
+                if (savedMac) {
+                    const matched = devices.find(d => d.id === savedMac || d.name === savedMac);
+                    if (matched) {
+                        targetDevice = matched;
+                    }
+                }
+                console.log("Auto-printing to previously paired device:", targetDevice.name);
+                doPrintJob(targetDevice);
+            }
+        }).catch(err => {
+            console.log("Auto-print check failed:", err);
+        });
+    }
+});
+</script>
+{% endif %}
 {% endblock %}
+
+

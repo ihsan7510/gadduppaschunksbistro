@@ -9,3 +9,4 @@ whitenoise>=6.0
 daphne>=4.0
 dj-database-url>=2.0
 psycopg2-binary>=2.9
+pyserial>=3.5

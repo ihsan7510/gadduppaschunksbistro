@@ -82,6 +82,94 @@
             </form>
         </div>
     </div>
+
+    <!-- Danger Zone Card -->
+    <div class="card-panel mt-4" style="border: 1px solid var(--accent-red); margin-top: 24px; background: rgba(239, 68, 68, 0.02);">
+        <div class="panel-header" style="border-bottom: 1px solid var(--border-light); background: rgba(239, 68, 68, 0.05);">
+            <h3 style="color: var(--accent-red); display: flex; align-items: center; gap: 8px;">
+                <i class="bi bi-exclamation-triangle-fill"></i> Danger Zone
+            </h3>
+        </div>
+        <div class="panel-body" style="padding: 20px;">
+            <p class="text-secondary mb-3" style="font-size: 0.9rem; margin-bottom: 16px;">
+                Resetting system data is permanent and cannot be undone. You can selectively delete transactions, menu items, inventory, or staff.
+            </p>
+            <button type="button" class="btn-danger" data-bs-toggle="modal" data-bs-target="#resetModal">
+                <i class="bi bi-trash-fill"></i> Reset / Clear Data
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Reset Data Modal -->
+<div class="modal fade" id="resetModal" tabindex="-1" aria-labelledby="resetModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background: var(--bg-card); border: 1px solid var(--border-light); color: var(--text-primary); border-radius: var(--radius-lg);">
+            <div class="modal-header" style="border-bottom: 1px solid var(--border);">
+                <h5 class="modal-title" id="resetModalLabel" style="color: var(--accent-red); font-weight: bold; display: flex; align-items: center; gap: 8px;">
+                    <i class="bi bi-exclamation-triangle-fill"></i> Reset System Data
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'admin_panel:reset_data' %}">
+                {% csrf_token %}
+                <div class="modal-body" style="padding: 20px;">
+                    <p class="mb-4 text-secondary" style="font-size: 0.9rem;">Select the data modules you wish to permanently delete:</p>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 16px;">
+                        <label class="checkbox-label" style="align-items: flex-start;">
+                            <input type="checkbox" name="reset_transactions" checked required>
+                            <div>
+                                <strong>Transactions & Operational Data</strong>
+                                <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 2px;">
+                                    Deletes all orders, bills, and staff attendance logs. Resets table statuses to "Free". (Required)
+                                </div>
+                            </div>
+                        </label>
+                        
+                        <label class="checkbox-label" style="align-items: flex-start;">
+                            <input type="checkbox" name="reset_menu">
+                            <div>
+                                <strong>Menu Items & Categories</strong>
+                                <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 2px;">
+                                    Deletes all food categories and menu items.
+                                </div>
+                            </div>
+                        </label>
+
+                        <label class="checkbox-label" style="align-items: flex-start;">
+                            <input type="checkbox" name="reset_inventory">
+                            <div>
+                                <strong>Inventory Items</strong>
+                                <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 2px;">
+                                    Deletes all ingredients/supplies listed in inventory.
+                                </div>
+                            </div>
+                        </label>
+
+                        <label class="checkbox-label" style="align-items: flex-start;">
+                            <input type="checkbox" name="reset_staff">
+                            <div>
+                                <strong>Staff Members</strong>
+                                <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 2px;">
+                                    Deletes all staff members (excluding Admin users to prevent lockout).
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                    
+                    <div style="margin-top: 24px; padding: 12px; border-radius: var(--radius-sm); border: 1px solid rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.05); color: #fca5a5; display: flex; align-items: center; gap: 8px; font-size: 0.8rem;">
+                        <i class="bi bi-info-circle-fill" style="color: var(--accent-red);"></i>
+                        <div>Warning: This action is permanent and cannot be undone!</div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid var(--border); padding: 16px 20px; display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" class="btn-secondary" data-bs-dismiss="modal" style="padding: 8px 16px;">Cancel</button>
+                    <button type="submit" class="btn-danger" style="padding: 8px 16px; background: var(--accent-red); color: white;">Confirm Reset</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 <!-- Bluetooth Scan Modal -->
@@ -223,18 +311,40 @@ document.addEventListener('DOMContentLoaded', function() {
                     <strong style="color: var(--text-primary);">${device.name || 'Unnamed Device'}</strong>
                     <div class="small text-secondary">Paired / Authorized via Browser</div>
                 </div>
-                <span class="badge bg-success">Authorized</span>
+                <span class="badge bg-success" id="authBadge">Authorizing...</span>
             `;
             deviceList.appendChild(li);
             
             // Connect GATT server to initiate connection/pairing
+            let isConnected = false;
             try {
                 await device.gatt.connect();
+                isConnected = true;
             } catch (gattErr) {
-                console.log("GATT connection skipped or not supported, but device authorized.", gattErr);
+                console.log("GATT connection failed", gattErr);
             }
             
-            alert(`Authorized device: ${device.name || 'Unnamed Device'}. You can now run a "Scan Local PC" to discover its hardware address.`);
+            const badge = document.getElementById('authBadge');
+            if (isConnected) {
+                badge.innerText = "Connected";
+                badge.className = "badge bg-success";
+                
+                // Populate printer_mac with device.id
+                printerMacInput.value = device.id;
+                
+                alert(`Connection successful! Loaded printer "${device.name || 'Unnamed Device'}" to the Settings form. Click "Save Settings" below to apply.`);
+                
+                if (!modalInstance) {
+                    modalInstance = bootstrap.Modal.getInstance(bluetoothModalEl);
+                }
+                if (modalInstance) {
+                    modalInstance.hide();
+                }
+            } else {
+                badge.innerText = "Auth Failed";
+                badge.className = "badge bg-danger";
+                alert(`Could not connect to ${device.name || 'Unnamed Device'}. Please ensure it is powered on and within range.`);
+            }
         } catch (err) {
             console.error(err);
             if (err.name !== 'NotFoundError') {
@@ -242,6 +352,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+
 });
 </script>
 {% endblock %}

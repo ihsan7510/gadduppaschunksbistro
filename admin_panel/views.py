@@ -4,7 +4,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
-from django.db.models import Sum, Count, Q
+from django.db.models import Sum, Count, Q, ProtectedError
 from django.http import JsonResponse
 import datetime
 
@@ -252,8 +252,12 @@ def table_edit(request, pk):
 @admin_required
 def table_delete(request, pk):
     if request.method == 'POST':
-        get_object_or_404(RestaurantTable, pk=pk).delete()
-        messages.success(request, 'Table deleted.')
+        table = get_object_or_404(RestaurantTable, pk=pk)
+        try:
+            table.delete()
+            messages.success(request, 'Table deleted.')
+        except ProtectedError:
+            messages.error(request, 'Cannot delete this table because it is referenced in existing orders.')
     return redirect('admin_panel:table_list')
 
 
@@ -315,8 +319,12 @@ def menu_edit(request, pk):
 @admin_required
 def menu_delete(request, pk):
     if request.method == 'POST':
-        get_object_or_404(MenuItem, pk=pk).delete()
-        messages.success(request, 'Menu item deleted.')
+        item = get_object_or_404(MenuItem, pk=pk)
+        try:
+            item.delete()
+            messages.success(request, 'Menu item deleted.')
+        except ProtectedError:
+            messages.error(request, 'Cannot delete this menu item because it is referenced in existing orders. You can mark it as unavailable instead.')
     return redirect('admin_panel:menu_list')
 
 
@@ -386,9 +394,14 @@ def inventory_edit(request, pk):
 @admin_required
 def inventory_delete(request, pk):
     if request.method == 'POST':
-        get_object_or_404(InventoryItem, pk=pk).delete()
-        messages.success(request, 'Inventory item deleted.')
+        item = get_object_or_404(InventoryItem, pk=pk)
+        try:
+            item.delete()
+            messages.success(request, 'Inventory item deleted.')
+        except ProtectedError:
+            messages.error(request, 'Cannot delete this inventory item because it is referenced elsewhere.')
     return redirect('admin_panel:inventory_list')
+
 
 
 # ─────────────────────── BILLING ─────────────────────────
@@ -427,13 +440,26 @@ def bill_detail(request, pk):
 def bill_print(request, pk):
     bill = get_object_or_404(Bill, pk=pk)
     settings_obj = get_settings()
-    from core.printer import print_bill, generate_receipt_text
+    from core.printer import print_bill, generate_receipt_text, get_bill_escpos_bytes
+    import base64
+    
     success, message = print_bill(bill, settings_obj)
     receipt_text = generate_receipt_text(bill, settings_obj)
+    
+    # Generate ESC/POS bytes in base64 format for browser-side Web Bluetooth printing
+    try:
+        raw_bytes = get_bill_escpos_bytes(bill, settings_obj)
+        escpos_bytes_b64 = base64.b64encode(raw_bytes).decode('utf-8')
+    except Exception as e:
+        print(f"Failed to generate ESC/POS bytes: {e}")
+        escpos_bytes_b64 = ""
+        
     return render(request, 'admin_panel/bill_print.html', {
         'bill': bill, 'success': success, 'message': message,
-        'receipt_text': receipt_text, 'settings': settings_obj
+        'receipt_text': receipt_text, 'settings': settings_obj,
+        'escpos_bytes_b64': escpos_bytes_b64
     })
+
 
 
 @admin_required
@@ -520,4 +546,45 @@ def scan_bluetooth(request):
             pass
 
     return JsonResponse({'success': True, 'devices': devices})
+
+
+@admin_required
+def reset_data(request):
+    if request.method == 'POST':
+        reset_transactions = request.POST.get('reset_transactions') == 'on'
+        reset_menu = request.POST.get('reset_menu') == 'on'
+        reset_inventory = request.POST.get('reset_inventory') == 'on'
+        reset_staff = request.POST.get('reset_staff') == 'on'
+        
+        messages_list = []
+        
+        if reset_transactions:
+            Bill.objects.all().delete()
+            OrderItem.objects.all().delete()
+            Order.objects.all().delete()
+            Attendance.objects.all().delete()
+            RestaurantTable.objects.all().update(status='free')
+            messages_list.append("transaction/operational data reset")
+            
+        if reset_menu:
+            MenuItem.objects.all().delete()
+            Category.objects.all().delete()
+            messages_list.append("menu items and categories deleted")
+            
+        if reset_inventory:
+            InventoryItem.objects.all().delete()
+            messages_list.append("inventory cleared")
+            
+        if reset_staff:
+            # Delete staff but keep the admin to avoid lockout
+            Staff.objects.exclude(role='admin').delete()
+            messages_list.append("non-admin staff deleted")
+            
+        if messages_list:
+            messages.success(request, f"Successfully reset: {', '.join(messages_list)}.")
+        else:
+            messages.warning(request, "No reset options selected.")
+            
+    return redirect('admin_panel:settings')
+
 

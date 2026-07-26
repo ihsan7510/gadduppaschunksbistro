@@ -39,5 +39,6 @@ urlpatterns = [
     # Settings
     path('settings/', views.settings_view, name='settings'),
     path('settings/scan-bluetooth/', views.scan_bluetooth, name='scan_bluetooth'),
+    path('settings/reset/', views.reset_data, name='reset_data'),
 ]
 
