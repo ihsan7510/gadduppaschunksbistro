@@ -113,6 +113,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             setStatus("Receipt printed successfully!");
+            if (device && device.id) {
+                localStorage.setItem('bluetooth_printer_device_id', device.id);
+            }
             setTimeout(() => {
                 statusDiv.style.display = 'none';
             }, 3000);
@@ -153,13 +156,19 @@ document.addEventListener('DOMContentLoaded', function() {
         navigator.bluetooth.getDevices().then(devices => {
             if (devices.length > 0) {
                 const savedMac = "{{ settings.printer_mac }}";
-                let targetDevice = devices[0];
-                if (savedMac) {
-                    const matched = devices.find(d => d.id === savedMac || d.name === savedMac);
-                    if (matched) {
-                        targetDevice = matched;
-                    }
+                const localSavedId = localStorage.getItem('bluetooth_printer_device_id');
+                let targetDevice = null;
+                
+                if (localSavedId) {
+                    targetDevice = devices.find(d => d.id === localSavedId);
                 }
+                if (!targetDevice && savedMac) {
+                    targetDevice = devices.find(d => d.id === savedMac || d.name === savedMac);
+                }
+                if (!targetDevice) {
+                    targetDevice = devices[0];
+                }
+                
                 console.log("Auto-printing to previously paired device:", targetDevice.name);
                 doPrintJob(targetDevice);
             }
