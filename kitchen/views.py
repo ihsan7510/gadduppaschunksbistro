@@ -3,7 +3,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.utils import timezone
-from core.models import Order, OrderItem, RestaurantSettings
+from django.db.models import Q
+from core.models import Order, OrderItem, RestaurantSettings, Staff
 
 
 def get_settings():
@@ -16,10 +17,26 @@ def kitchen_login(request):
         return redirect('kitchen:orders')
     error = None
     if request.method == 'POST':
-        if request.POST.get('password') == 'kitchen123':
+        password = request.POST.get('password', '').strip()
+        if password == 'kitchen123':
             request.session['kitchen_logged_in'] = True
             return redirect('kitchen:orders')
-        error = 'Wrong password!'
+        
+        # Check Staff table for chef role
+        staff = Staff.objects.filter(
+            role='chef',
+            is_active=True
+        ).filter(
+            Q(pin=password) | Q(password=password)
+        ).first()
+        
+        if staff:
+            request.session['kitchen_logged_in'] = True
+            request.session['kitchen_staff_id'] = staff.pk
+            request.session['kitchen_staff_name'] = staff.name
+            return redirect('kitchen:orders')
+        else:
+            error = 'Wrong password or PIN!'
     return render(request, 'kitchen/login.html', {'error': error, 'settings': get_settings()})
 
 

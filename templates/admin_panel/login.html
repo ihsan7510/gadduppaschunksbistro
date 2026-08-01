@@ -6,7 +6,11 @@
     <div class="login-container">
         <div class="login-card">
             <div class="login-header">
+                {% if settings.logo %}
+                <img src="{{ settings.logo.url }}" alt="Logo" style="height: 72px; margin-bottom: 16px; border-radius: 12px; object-fit: contain;">
+                {% else %}
                 <div class="brand-icon">🍴</div>
+                {% endif %}
                 <h1>{{ settings.restaurant_name }}</h1>
                 <p>Admin Control Panel</p>
             </div>

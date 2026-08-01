@@ -6,7 +6,11 @@
     <div class="login-container">
         <div class="login-card">
             <div class="login-header">
+                {% if settings.logo %}
+                <img src="{{ settings.logo.url }}" alt="Logo" style="height: 72px; margin-bottom: 16px; border-radius: 12px; object-fit: contain;">
+                {% else %}
                 <div class="brand-icon">🧑‍🍽️</div>
+                {% endif %}
                 <h1>Waiter Login</h1>
                 <p>{{ settings.restaurant_name }}</p>
             </div>
@@ -16,9 +20,8 @@
             <form method="post" class="login-form">
                 {% csrf_token %}
                 <div class="pin-pad">
-                    <label>Enter Your PIN</label>
-                    <input type="password" name="pin" id="pinInput" placeholder="••••••" maxlength="6"
-                        inputmode="numeric" pattern="[0-9]*" class="pin-input" autofocus autocomplete="off">
+                    <label>Enter Your PIN or Password</label>
+                    <input type="password" name="pin" id="pinInput" placeholder="••••••" class="pin-input" autofocus autocomplete="off">
                     <div class="numpad">
                         {% for n in "123456789" %}
                         <button type="button" class="numpad-btn" onclick="addPin('{{ n }}')">{{ n }}</button>
@@ -40,7 +43,7 @@
 <script>
 function addPin(n) {
     const el = document.getElementById('pinInput');
-    if (el.value.length < 6) el.value += n;
+    if (el.value.length < 20) el.value += n;
 }
 function clearPin() {
     document.getElementById('pinInput').value = '';

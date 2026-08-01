@@ -18,6 +18,7 @@ class Staff(models.Model):
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
     phone = models.CharField(max_length=15, blank=True)
     pin = models.CharField(max_length=6)  # 4-6 digit PIN for quick login
+    password = models.CharField(max_length=100, blank=True, default='')
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -163,9 +164,16 @@ class Order(models.Model):
     def save(self, *args, **kwargs):
         if not self.order_number:
             import datetime
-            today = datetime.date.today()
-            count = Order.objects.filter(created_at__date=today).count() + 1
-            self.order_number = f"ORD{today.strftime('%y%m%d')}{count:03d}"
+            from django.utils import timezone
+            today = timezone.localdate()
+            base_number = f"ORD{today.strftime('%y%m%d')}"
+            count = Order.objects.filter(order_number__startswith=base_number).count() + 1
+            while True:
+                candidate = f"{base_number}{count:03d}"
+                if not Order.objects.filter(order_number=candidate).exists():
+                    self.order_number = candidate
+                    break
+                count += 1
         super().save(*args, **kwargs)
 
     @property

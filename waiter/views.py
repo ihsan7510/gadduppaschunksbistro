@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.utils import timezone
 from django.http import JsonResponse
 import json
+from django.db.models import Q
 
 from core.models import (
     Staff, RestaurantTable, Category, MenuItem, Order, OrderItem, Bill, RestaurantSettings
@@ -24,7 +25,10 @@ def waiter_login(request):
     if request.method == 'POST':
         pin = request.POST.get('pin', '').strip()
         try:
-            staff = Staff.objects.get(pin=pin, is_active=True, role__in=['waiter', 'admin', 'cashier'])
+            staff = Staff.objects.get(
+                Q(pin=pin) | Q(password=pin),
+                is_active=True
+            )
             request.session['waiter_id'] = staff.pk
             request.session['waiter_name'] = staff.name
             request.session['waiter_role'] = staff.role
@@ -38,9 +42,21 @@ def waiter_login(request):
                 att.clock_in = timezone.now().time()
                 att.save()
             
-            return redirect('waiter:tables')
+            # Role-based redirection
+            if staff.role == 'admin':
+                request.session['admin_logged_in'] = True
+                request.session['admin_name'] = staff.name
+                request.session['admin_staff_id'] = staff.pk
+                return redirect('admin_panel:dashboard')
+            elif staff.role == 'chef':
+                request.session['kitchen_logged_in'] = True
+                request.session['kitchen_staff_id'] = staff.pk
+                request.session['kitchen_staff_name'] = staff.name
+                return redirect('kitchen:orders')
+            else:
+                return redirect('waiter:tables')
         except Staff.DoesNotExist:
-            error = 'Invalid PIN. Please try again.'
+            error = 'Invalid PIN or Password. Please try again.'
     
     return render(request, 'waiter/login.html', {'error': error, 'settings': get_settings()})
 
@@ -64,8 +80,15 @@ def waiter_logout(request):
 
 def waiter_required(view_func):
     def wrapper(request, *args, **kwargs):
-        if not request.session.get('waiter_id') and not request.session.get('admin_logged_in'):
+        waiter_id = request.session.get('waiter_id')
+        if not waiter_id and not request.session.get('admin_logged_in'):
             return redirect('waiter:login')
+        if waiter_id:
+            try:
+                request.waiter = Staff.objects.get(pk=waiter_id)
+            except Staff.DoesNotExist:
+                request.session.flush()
+                return redirect('waiter:login')
         return view_func(request, *args, **kwargs)
     return wrapper
 
@@ -169,10 +192,8 @@ def place_order(request, table_pk):
         return redirect('waiter:take_order', table_pk=table_pk)
     
     table = get_object_or_404(RestaurantTable, pk=table_pk)
-    waiter_id = request.session.get('waiter_id')
-    if waiter_id:
-        waiter = get_object_or_404(Staff, pk=waiter_id)
-    else:
+    waiter = getattr(request, 'waiter', None)
+    if not waiter:
         waiter = Staff.objects.filter(role='admin').first()
         if not waiter:
             waiter, _ = Staff.objects.get_or_create(

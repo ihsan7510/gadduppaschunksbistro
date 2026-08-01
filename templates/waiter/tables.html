@@ -35,7 +35,7 @@
 
         <div class="table-grid-waiter">
             {% for td in table_data %}
-            <div class="table-card-waiter status-{{ td.table.status }}" onclick="selectTable({{ td.table.pk }}, '{{ td.table.status }}', {{ td.active_order.pk|default:'null' }}, {{ td.bill_pk|default:'null' }}, false)">
+            <div class="table-card-waiter status-{{ td.table.status }} {% if td.bill_pk %}ready-to-pay{% endif %}" onclick="selectTable({{ td.table.pk }}, '{{ td.table.status }}', {{ td.active_order.pk|default:'null' }}, {{ td.bill_pk|default:'null' }}, false)">
                 <div class="table-num">T{{ td.table.number }}</div>
                 <div class="table-capacity"><i class="bi bi-people"></i> {{ td.table.capacity }}</div>
 
@@ -43,6 +43,11 @@
                 <div class="table-order-info">
                     <div>#{{ td.active_order.order_number }}</div>
                     <div class="order-status-pill {{ td.active_order.status }}">{{ td.active_order.get_status_display }}</div>
+                    {% if td.active_order.bill %}
+                    <div class="table-bill-total" style="color: var(--accent-green); font-size: 1.1rem; margin-top: 6px; font-weight: 800;">₹{{ td.active_order.bill.total }}</div>
+                    {% else %}
+                    <div class="table-bill-total" style="color: var(--text-secondary); font-size: 1.1rem; margin-top: 6px; font-weight: 800;">₹{{ td.active_order.total_amount }}</div>
+                    {% endif %}
                 </div>
 
                 <!-- Direct action buttons on card -->
@@ -87,7 +92,7 @@
 
         <div class="table-grid-waiter" style="margin-top: 16px;">
             {% for pd in parcel_data %}
-            <div class="table-card-waiter status-occupied" onclick="selectTable({{ pd.table.pk }}, 'occupied', {{ pd.active_order.pk|default:'null' }}, {{ pd.bill_pk|default:'null' }}, true)">
+            <div class="table-card-waiter status-occupied {% if pd.bill_pk %}ready-to-pay{% endif %}" onclick="selectTable({{ pd.table.pk }}, 'occupied', {{ pd.active_order.pk|default:'null' }}, {{ pd.bill_pk|default:'null' }}, true)">
                 <div class="table-num">P{{ pd.table.number }}</div>
                 <div class="table-capacity"><i class="bi bi-box-seam"></i> Takeaway</div>
 
@@ -95,6 +100,11 @@
                 <div class="table-order-info">
                     <div>#{{ pd.active_order.order_number }}</div>
                     <div class="order-status-pill {{ pd.active_order.status }}">{{ pd.active_order.get_status_display }}</div>
+                    {% if pd.active_order.bill %}
+                    <div class="table-bill-total" style="color: var(--accent-green); font-size: 1.1rem; margin-top: 6px; font-weight: 800;">₹{{ pd.active_order.bill.total }}</div>
+                    {% else %}
+                    <div class="table-bill-total" style="color: var(--text-secondary); font-size: 1.1rem; margin-top: 6px; font-weight: 800;">₹{{ pd.active_order.total_amount }}</div>
+                    {% endif %}
                 </div>
 
                 <!-- Direct action buttons on card -->

@@ -60,6 +60,7 @@
                 <div class="tv-order-card cooking" id="tv-order-{{ order.pk }}">
                     <div class="tv-order-num">#{{ order.order_number }}</div>
                     <div class="tv-table-num">{{ order.table.display_name }}</div>
+                    <div style="font-size: 1.6rem; font-weight: 800; color: var(--tv-cooking-accent); margin-bottom: 12px;" data-created="{{ order.created_at|date:'Y-m-d\TH:i:s' }}">0m ago</div>
                     <div class="tv-items">
                         {% for item in order.items.all %}
                         <span class="tv-item {% if item.status == 'ready' %}item-done{% endif %}">
@@ -94,6 +95,7 @@
                 <div class="tv-order-card ready" id="tv-order-{{ order.pk }}">
                     <div class="tv-order-num">#{{ order.order_number }}</div>
                     <div class="tv-table-num">{{ order.table.display_name }}</div>
+                    <div style="font-size: 1.6rem; font-weight: 800; color: var(--tv-ready-accent); margin-bottom: 12px;" data-created="{{ order.created_at|date:'Y-m-d\TH:i:s' }}">0m ago</div>
                     <div class="tv-items">
                         {% for item in order.items.all %}
                         <span class="tv-item">{{ item.menu_item.name }}{% if item.quantity > 1 %} ×{{ item.quantity }}{% endif %}</span>
@@ -118,6 +120,20 @@
         });
     }
     setInterval(updateClock, 1000); updateClock();
+
+    // Elapsed preparation time calculation
+    function updateElapsedTimes() {
+        document.querySelectorAll('[data-created]').forEach(el => {
+            const createdStr = el.getAttribute('data-created');
+            if (!createdStr) return;
+            const createdDate = new Date(createdStr);
+            const diffMs = new Date() - createdDate;
+            const diffMins = Math.max(0, Math.floor(diffMs / 60000));
+            el.textContent = `${diffMins}m ago`;
+        });
+    }
+    setInterval(updateElapsedTimes, 15000);
+    updateElapsedTimes();
 
     // Theme Toggle logic
     function toggleTheme() {

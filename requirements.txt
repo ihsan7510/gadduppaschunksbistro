@@ -10,3 +10,5 @@ daphne>=4.0
 dj-database-url>=2.0
 psycopg2-binary>=2.9
 pyserial>=3.5
+pymysql>=1.1.0
+

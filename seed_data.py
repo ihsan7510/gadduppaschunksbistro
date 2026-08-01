@@ -28,11 +28,11 @@ print("✅ Restaurant settings saved")
 
 # Staff
 staff_data = [
-    {"name": "Ravi Kumar", "role": "admin", "phone": "9876543210", "pin": "1234"},
-    {"name": "Priya Sharma", "role": "waiter", "phone": "9876543211", "pin": "2222"},
-    {"name": "Amit Singh", "role": "waiter", "phone": "9876543212", "pin": "3333"},
-    {"name": "Chef Ramesh", "role": "chef", "phone": "9876543213", "pin": "4444"},
-    {"name": "Sneha Patel", "role": "cashier", "phone": "9876543214", "pin": "5555"},
+    {"name": "Ravi Kumar", "role": "admin", "phone": "9876543210", "pin": "1234", "password": "ravi123"},
+    {"name": "Priya Sharma", "role": "waiter", "phone": "9876543211", "pin": "2222", "password": "priya123"},
+    {"name": "Amit Singh", "role": "waiter", "phone": "9876543212", "pin": "3333", "password": "amit123"},
+    {"name": "Chef Ramesh", "role": "chef", "phone": "9876543213", "pin": "4444", "password": "chef123"},
+    {"name": "Sneha Patel", "role": "cashier", "phone": "9876543214", "pin": "5555", "password": "sneha123"},
 ]
 for s in staff_data:
     Staff.objects.get_or_create(pin=s['pin'], defaults=s)

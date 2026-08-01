@@ -56,47 +56,32 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function doPrintJob(device) {
         try {
-            setStatus(`Connecting to printer: ${device.name}...`);
+            setStatus(`Connecting to printer: ${device.name || 'Printer'}...`);
             const server = await device.gatt.connect();
 
-            setStatus("Locating print service...");
-            let service = null;
+            setStatus("Scanning services for print capabilities...");
+            let writeChar = null;
             
-            // Try common service UUIDs
-            const serviceUUIDs = [
-                '0000ffe0-0000-1000-8000-00805f9b34fb',
-                '000018f0-0000-1000-8000-00805f9b34fb',
-                '00001101-0000-1000-8000-00805f9b34fb'
-            ];
-
-            for (const uuid of serviceUUIDs) {
-                try {
-                    service = await server.getPrimaryService(uuid);
-                    if (service) break;
-                } catch (e) {
-                    console.log(`Service ${uuid} not found, trying next...`);
-                }
-            }
-
-            if (!service) {
-                // Try finding any primary service if those failed
-                try {
-                    const services = await server.getPrimaryServices();
-                    if (services.length > 0) {
-                        service = services[0];
+            try {
+                const services = await server.getPrimaryServices();
+                for (const service of services) {
+                    try {
+                        const characteristics = await service.getCharacteristics();
+                        for (const char of characteristics) {
+                            if (char.properties.write || char.properties.writeWithoutResponse) {
+                                writeChar = char;
+                                console.log("[ThermalPrinter] Found printable Characteristic:", char.uuid);
+                                break;
+                            }
+                        }
+                    } catch (e) {
+                        console.log(`Failed to get characteristics for service: ${service.uuid}`, e);
                     }
-                } catch (err) {
-                    throw new Error("Could not find any GATT service on the printer.");
+                    if (writeChar) break;
                 }
+            } catch (err) {
+                throw new Error("Could not discover GATT services on the printer.");
             }
-
-            if (!service) {
-                throw new Error("No print service discovered on device.");
-            }
-
-            setStatus("Acquiring printer characteristic...");
-            const characteristics = await service.getCharacteristics();
-            const writeChar = characteristics.find(c => c.properties.write || c.properties.writeWithoutResponse);
 
             if (!writeChar) {
                 throw new Error("No writeable characteristic found on printer.");
@@ -151,7 +136,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const device = await navigator.bluetooth.requestDevice({
                 acceptAllDevices: true,
                 optionalServices: [
-                    '000018f0-0000-1000-8000-00805f9b34fb', // Standard thermal printer service
+                    '000018f0-0000-1000-8000-00805f9b34fb', // Standard ESC/POS Service UUID
+                    '0000ff00-0000-1000-8000-00805f9b34fb',
+                    '49535343-fe7d-4ae5-8fa9-9fafd205e455',
+                    'e7810a71-73ae-499d-8c15-faa9aef0c3f2',
                     '0000ffe0-0000-1000-8000-00805f9b34fb', // Custom serial/printer service
                     '00001101-0000-1000-8000-00805f9b34fb'  // SPP Service
                 ]

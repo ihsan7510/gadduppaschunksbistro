@@ -25,10 +25,27 @@ def admin_login(request):
     
     error = None
     if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
+        username = request.POST.get('username', '').strip()
+        password = request.POST.get('password', '').strip()
         if username == 'admin' and password == 'admin123':
             request.session['admin_logged_in'] = True
+            request.session['admin_name'] = 'System Admin'
+            return redirect('admin_panel:dashboard')
+        
+        # Also check Staff table for admin role
+        staff = Staff.objects.filter(
+            role='admin',
+            is_active=True
+        ).filter(
+            Q(name=username) | Q(phone=username)
+        ).filter(
+            Q(pin=password) | Q(password=password)
+        ).first()
+        
+        if staff:
+            request.session['admin_logged_in'] = True
+            request.session['admin_name'] = staff.name
+            request.session['admin_staff_id'] = staff.pk
             return redirect('admin_panel:dashboard')
         else:
             error = 'Invalid credentials'
@@ -119,6 +136,7 @@ def staff_create(request):
             role=request.POST['role'],
             phone=request.POST.get('phone', ''),
             pin=request.POST['pin'],
+            password=request.POST.get('password', ''),
             is_active=request.POST.get('is_active') == 'on',
         )
         messages.success(request, 'Staff member added successfully!')
@@ -137,6 +155,7 @@ def staff_edit(request, pk):
         staff.role = request.POST['role']
         staff.phone = request.POST.get('phone', '')
         staff.pin = request.POST['pin']
+        staff.password = request.POST.get('password', '')
         staff.is_active = request.POST.get('is_active') == 'on'
         staff.save()
         messages.success(request, 'Staff updated successfully!')

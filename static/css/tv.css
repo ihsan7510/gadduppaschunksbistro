@@ -1,52 +1,38 @@
-/* TV Display CSS — Large Screen, Bold, High Contrast */
+/* TV Display CSS — Large Screen, Bold, Premium High Contrast */
 
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Inter:wght@400;600;700;800;900&display=swap');
 
 :root {
-  --tv-bg: #05080f;
-  --tv-card-bg: #0d1117;
-  --tv-cooking-bg: #1a0f00;
-  --tv-ready-bg: #001a0f;
-  --tv-border: rgba(255,255,255,0.08);
-  --tv-cooking-accent: #f59e0b;
-  --tv-ready-accent: #10b981;
-  --tv-text: #f8fafc;
-  --tv-muted: #94a3b8;
+  --tv-bg: #0d0926;
+  --tv-card-bg: #1c1545;
+  --tv-cooking-bg: rgba(243, 167, 18, 0.12);
+  --tv-ready-bg: rgba(18, 129, 91, 0.12);
+  --tv-new-bg: rgba(98, 70, 234, 0.12);
+  --tv-border: rgba(255, 255, 255, 0.08);
+  --tv-new-accent: #6246ea;
+  --tv-cooking-accent: #f3a712;
+  --tv-ready-accent: #12815b;
+  --tv-text: #ffffff;
+  --tv-muted: rgba(255, 255, 255, 0.6);
+  --radius-lg: 16px;
+  --radius-xl: 24px;
 }
 
 [data-theme="light"] {
-  --tv-bg: #f8fafc;
+  --tv-bg: #f6f7fb;
   --tv-card-bg: #ffffff;
-  --tv-cooking-bg: #fffbeb;
-  --tv-ready-bg: #f0fdf4;
-  --tv-border: rgba(0, 0, 0, 0.08);
-  --tv-text: #0f172a;
+  --tv-cooking-bg: rgba(243, 167, 18, 0.08);
+  --tv-ready-bg: rgba(18, 129, 91, 0.08);
+  --tv-new-bg: rgba(98, 70, 234, 0.08);
+  --tv-border: rgba(32, 23, 85, 0.08);
+  --tv-text: #201755;
   --tv-muted: #475569;
-}
-
-.theme-toggle-btn {
-  background: none;
-  border: 1px solid var(--tv-border);
-  border-radius: 8px;
-  padding: 8px 16px;
-  color: var(--tv-muted);
-  cursor: pointer;
-  font-size: 1.2rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-  font-family: inherit;
-}
-.theme-toggle-btn:hover {
-  background: var(--tv-card-bg);
-  color: var(--tv-text);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body.tv-body {
-  font-family: 'Outfit', sans-serif;
+  font-family: 'Outfit', 'Inter', sans-serif;
   background: var(--tv-bg);
   color: var(--tv-text);
   min-height: 100vh;
@@ -60,10 +46,11 @@ body.tv-body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 32px;
-  background: linear-gradient(135deg, #0d1117, #131c2b);
-  border-bottom: 2px solid rgba(255,255,255,0.08);
+  padding: 20px 40px;
+  background: #201755;
+  border-bottom: 4px solid var(--tv-cooking-accent);
   flex-shrink: 0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 .tv-brand {
@@ -76,45 +63,43 @@ body.tv-body {
 .tv-logo-icon { font-size: 3rem; }
 
 .tv-restaurant-name {
-  font-size: 2rem;
+  font-size: 2.2rem;
   font-weight: 900;
-  background: linear-gradient(135deg, #fff, #94a3b8);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #ffffff;
   line-height: 1;
 }
 
 .tv-tagline {
-  font-size: 0.9rem;
-  color: var(--tv-muted);
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.6);
   margin-top: 4px;
 }
 
 .tv-clock {
-  font-size: 2.5rem;
+  font-size: 2.8rem;
   font-weight: 800;
   font-family: monospace;
-  color: var(--tv-text);
-  background: rgba(255,255,255,0.06);
-  padding: 8px 20px;
-  border-radius: 12px;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 10px 24px;
+  border-radius: 16px;
 }
 
 /* MARQUEE */
 .tv-marquee {
-  background: linear-gradient(135deg, rgba(169,15,26,0.2), rgba(16,185,129,0.2));
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-  padding: 10px 0;
+  background: linear-gradient(135deg, rgba(98, 70, 234, 0.2), rgba(18, 129, 91, 0.2));
+  border-bottom: 1px solid var(--tv-border);
+  padding: 14px 0;
   overflow: hidden;
   flex-shrink: 0;
 }
 
 .tv-marquee-inner {
   white-space: nowrap;
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: 1.3rem;
+  font-weight: 700;
   color: var(--tv-text);
-  animation: marqueeScroll 30s linear infinite;
+  animation: marqueeScroll 35s linear infinite;
   display: inline-block;
   padding-left: 100%;
 }
@@ -124,11 +109,12 @@ body.tv-body {
   to { transform: translateX(-100%); }
 }
 
-/* STATUS BOARDS */
+/* BOARDS GRID */
 .tv-boards {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0;
+  gap: 24px;
+  padding: 24px;
   flex: 1;
   overflow: hidden;
 }
@@ -137,34 +123,35 @@ body.tv-body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border-right: 1px solid var(--tv-border);
+  background: var(--tv-card-bg);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--tv-border);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
 }
-
-.tv-column:last-child { border-right: none; }
 
 .tv-column-header {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 20px 28px;
-  border-bottom: 2px solid rgba(255,255,255,0.08);
+  gap: 20px;
+  padding: 24px 32px;
+  border-bottom: 3px solid rgba(255, 255, 255, 0.08);
   flex-shrink: 0;
 }
 
 .tv-column-header.cooking {
-  background: linear-gradient(135deg, rgba(245,158,11,0.15), transparent);
-  border-bottom-color: rgba(245,158,11,0.4);
+  background: linear-gradient(135deg, rgba(243, 167, 18, 0.15), transparent);
+  border-bottom-color: var(--tv-cooking-accent);
 }
 
 .tv-column-header.ready {
-  background: linear-gradient(135deg, rgba(16,185,129,0.15), transparent);
-  border-bottom-color: rgba(16,185,129,0.4);
+  background: linear-gradient(135deg, rgba(18, 129, 91, 0.15), transparent);
+  border-bottom-color: var(--tv-ready-accent);
 }
 
-.tv-col-icon { font-size: 2.2rem; }
+.tv-col-icon { font-size: 2.8rem; }
 
 .tv-column-header h2 {
-  font-size: 1.6rem;
+  font-size: 2.2rem;
   font-weight: 900;
   flex: 1;
 }
@@ -173,89 +160,93 @@ body.tv-body {
 .tv-column-header.ready h2 { color: var(--tv-ready-accent); }
 
 .tv-col-count {
-  font-size: 1.8rem;
+  font-size: 2.4rem;
   font-weight: 900;
-  width: 50px;
-  height: 50px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.cooking .tv-col-count { background: rgba(245,158,11,0.2); color: var(--tv-cooking-accent); }
-.ready .tv-col-count { background: rgba(16,185,129,0.2); color: var(--tv-ready-accent); }
+.cooking .tv-col-count { background: rgba(243, 167, 18, 0.2); color: var(--tv-cooking-accent); }
+.ready .tv-col-count { background: rgba(18, 129, 91, 0.2); color: var(--tv-ready-accent); }
 
-/* ORDER CARDS */
+/* ORDER CARDS IN TV columns */
 .tv-cards {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  padding: 24px;
   overflow-y: auto;
   flex: 1;
 }
 
-.tv-cards::-webkit-scrollbar { width: 6px; }
+.tv-cards::-webkit-scrollbar { width: 8px; }
 .tv-cards::-webkit-scrollbar-track { background: transparent; }
-.tv-cards::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+.tv-cards::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
 
 .tv-order-card {
-  border-radius: 16px;
-  padding: 20px;
-  border: 2px solid;
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  border: 3px solid;
   animation: fadeSlideIn 0.4s ease;
   position: relative;
   overflow: hidden;
+  background: rgba(255,255,255,0.02);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .tv-order-card.cooking {
   background: var(--tv-cooking-bg);
-  border-color: rgba(245,158,11,0.4);
+  border-color: var(--tv-cooking-accent);
 }
 
 .tv-order-card.ready {
   background: var(--tv-ready-bg);
-  border-color: rgba(16,185,129,0.5);
-  box-shadow: 0 0 30px rgba(16,185,129,0.15);
+  border-color: var(--tv-ready-accent);
+  box-shadow: 0 0 30px rgba(18, 129, 91, 0.2);
   animation: fadeSlideIn 0.4s ease, readyGlow 2s ease infinite;
 }
 
 .tv-order-num {
-  font-size: 2rem;
+  font-size: 2.8rem;
   font-weight: 900;
   line-height: 1;
-  margin-bottom: 4px;
+  margin-bottom: 8px;
 }
 
 .tv-order-card.cooking .tv-order-num { color: var(--tv-cooking-accent); }
 .tv-order-card.ready .tv-order-num { color: var(--tv-ready-accent); }
 
 .tv-table-num {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--tv-muted);
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--tv-text);
   margin-bottom: 12px;
 }
 
 .tv-items {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 12px;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
 }
 
 .tv-item {
-  background: rgba(255,255,255,0.07);
-  padding: 5px 12px;
-  border-radius: 20px;
-  font-size: 0.95rem;
-  font-weight: 600;
+  background: rgba(255,255,255,0.08);
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-size: 1.3rem;
+  font-weight: 700;
   color: var(--tv-text);
 }
 
 .tv-item.item-done {
-  background: rgba(16,185,129,0.1);
+  background: rgba(18, 129, 91, 0.15);
   color: var(--tv-ready-accent);
   text-decoration: line-through;
   opacity: 0.7;
@@ -264,15 +255,15 @@ body.tv-body {
 .tv-cooking-indicator {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 0.9rem;
+  gap: 12px;
+  font-size: 1.2rem;
   color: var(--tv-cooking-accent);
-  font-weight: 600;
+  font-weight: 700;
 }
 
-.cooking-dots { display: flex; gap: 4px; }
+.cooking-dots { display: flex; gap: 6px; }
 .cooking-dots span {
-  width: 8px; height: 8px; border-radius: 50%;
+  width: 10px; height: 10px; border-radius: 50%;
   background: var(--tv-cooking-accent);
   animation: cookingDot 1.4s ease infinite;
 }
@@ -280,13 +271,13 @@ body.tv-body {
 .cooking-dots span:nth-child(3) { animation-delay: 0.4s; }
 
 .tv-ready-label {
-  font-size: 1.1rem;
-  font-weight: 800;
+  font-size: 1.4rem;
+  font-weight: 900;
   color: var(--tv-ready-accent);
   text-align: center;
-  padding: 8px;
-  background: rgba(16,185,129,0.1);
-  border-radius: 8px;
+  padding: 10px;
+  background: rgba(18, 129, 91, 0.2);
+  border-radius: 12px;
   animation: readyPulse 1.5s ease infinite;
 }
 
@@ -294,11 +285,15 @@ body.tv-body {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 200px;
+  height: 250px;
   color: var(--tv-muted);
-  font-size: 1.1rem;
-  border: 2px dashed rgba(255,255,255,0.06);
-  border-radius: 16px;
+  font-size: 1.6rem;
+  font-weight: 700;
+  border: 3px dashed var(--tv-border);
+  border-radius: var(--radius-lg);
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 20px;
 }
 
 /* ANIMATIONS */
@@ -308,8 +303,8 @@ body.tv-body {
 }
 
 @keyframes readyGlow {
-  0%, 100% { box-shadow: 0 0 20px rgba(16,185,129,0.1); }
-  50% { box-shadow: 0 0 40px rgba(16,185,129,0.25); }
+  0%, 100% { box-shadow: 0 0 20px rgba(18, 129, 91, 0.15); }
+  50% { box-shadow: 0 0 40px rgba(18, 129, 91, 0.35); }
 }
 
 @keyframes readyPulse {

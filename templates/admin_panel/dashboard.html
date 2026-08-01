@@ -5,7 +5,7 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h3 class="font-outfit fw-bold m-0" style="color: var(--text-primary);">Overview</h3>
-    <a href="{% url 'waiter:create_parcel_order' %}" class="btn btn-primary font-outfit" style="background-color: var(--accent-orange, #ff6b35); border: none; font-weight: 600; padding: 10px 20px; border-radius: 10px; font-size: 0.95rem; text-decoration: none; color: white; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(255, 107, 53, 0.2);">
+    <a href="{% url 'waiter:create_parcel_order' %}" class="btn btn-primary font-outfit" style="background: linear-gradient(135deg, var(--accent-purple), #4a30c8); border: none; font-weight: 600; padding: 10px 20px; border-radius: 10px; font-size: 0.95rem; text-decoration: none; color: white; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(98, 70, 234, 0.25);">
         <i class="bi bi-plus-circle-fill"></i> New Delivery / Takeaway Order
     </a>
 </div>
@@ -129,8 +129,8 @@ new Chart(ctx, {
         datasets: [{
             label: 'Revenue (₹)',
             data: {{ weekly_data|safe }},
-            backgroundColor: 'rgba(169, 15, 26, 0.6)',
-            borderColor: 'rgba(169, 15, 26, 1)',
+            backgroundColor: 'rgba(98, 70, 234, 0.65)',
+            borderColor: 'rgba(98, 70, 234, 1)',
             borderWidth: 2,
             borderRadius: 8,
         }]
@@ -141,12 +141,12 @@ new Chart(ctx, {
         scales: {
             y: {
                 beginAtZero: true,
-                grid: { color: 'rgba(255,255,255,0.05)' },
-                ticks: { color: '#94a3b8' }
+                grid: { color: 'rgba(32, 23, 85, 0.05)' },
+                ticks: { color: '#64748b' }
             },
             x: {
                 grid: { display: false },
-                ticks: { color: '#94a3b8' }
+                ticks: { color: '#64748b' }
             }
         }
     }

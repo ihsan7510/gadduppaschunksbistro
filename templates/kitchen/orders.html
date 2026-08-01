@@ -32,6 +32,7 @@
                     <span class="kitchen-status-badge {{ order.status }}">{{ order.get_status_display }}</span>
                 </div>
             </div>
+            <div class="kitchen-elapsed-time-large" data-created="{{ order.created_at|date:'Y-m-d\TH:i:s' }}">0m ago</div>
             {% if order.waiter %}
             <div class="kitchen-waiter">Waiter: {{ order.waiter.name }}</div>
             {% endif %}
@@ -153,11 +154,24 @@ function getCookie(name) {
     return val ? val.split('=')[1] : '';
 }
 
-// Live clock
+// Live clock & elapsed preparation time calculation
 function updateTime() {
     const el = document.getElementById('kTime');
     if(el) el.textContent = new Date().toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
 }
 setInterval(updateTime, 1000); updateTime();
+
+function updateElapsedTimes() {
+    document.querySelectorAll('[data-created]').forEach(el => {
+        const createdStr = el.getAttribute('data-created');
+        if (!createdStr) return;
+        const createdDate = new Date(createdStr);
+        const diffMs = new Date() - createdDate;
+        const diffMins = Math.max(0, Math.floor(diffMs / 60000));
+        el.textContent = `${diffMins}m ago`;
+    });
+}
+setInterval(updateElapsedTimes, 15000);
+updateElapsedTimes();
 </script>
 {% endblock %}

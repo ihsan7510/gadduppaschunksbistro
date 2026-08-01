@@ -83,7 +83,7 @@ def get_printer(settings_obj=None):
 def format_bill_receipt(printer, bill, settings_obj=None):
     """Format and send print commands to the printer instance."""
     # Header
-    printer.set(align='center', bold=True, height=2, width=2)
+    printer.set(align='center', bold=True, height=1, width=1)
     printer.text(f"{settings_obj.restaurant_name if settings_obj else 'Gadduppas'}\n")
     printer.set(align='center', bold=False, height=1, width=1)
     if settings_obj:
@@ -142,8 +142,26 @@ def format_bill_receipt(printer, bill, settings_obj=None):
     try:
         upi_id = settings_obj.upi_id if (settings_obj and settings_obj.upi_id) else 'merchant@upi'
         restaurant_name = settings_obj.restaurant_name if settings_obj else 'Gadduppas'
-        printer.qr(f"upi://pay?pa={upi_id}&pn={restaurant_name}&am={bill.total}&cu=INR", size=6)
-    except Exception:
+        upi_str = f"upi://pay?pa={upi_id}&pn={restaurant_name}&am={bill.total}&cu=INR"
+        
+        # Native hardware-accelerated ESC/POS QR Code generation
+        data_bytes = upi_str.encode('utf-8')
+        store_len = len(data_bytes) + 3
+        pL = store_len % 256
+        pH = store_len // 256
+        
+        qr_commands = bytearray([
+            0x1D, 0x28, 0x6B, 0x04, 0x00, 0x31, 0x41, 0x32, 0x00, # Model 2
+            0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x43, 0x06,       # Dot size
+            0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x45, 0x30,       # Error correction level (L)
+            0x1D, 0x28, 0x6B, pL, pH, 0x31, 0x50, 0x30,           # Store QR code data (cn=0x31, fn=0x50, m=0x30)
+        ])
+        qr_commands.extend(data_bytes)
+        qr_commands.extend([0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x51, 0x30]) # Print QR code from buffer
+        
+        printer._raw(bytes(qr_commands))
+    except Exception as e:
+        print(f"Failed to print native QR: {e}")
         printer.set(align='center')
         printer.text("[ QR Code to Pay ]\n")
     
@@ -171,8 +189,8 @@ def format_bill_receipt(printer, bill, settings_obj=None):
     else:
         printer.text("FOOD SHOULD BE CONSUMED\nWITH IN 1 HOURS OF DELIVERY IN\nHYGIENIC ENVIRONMENT\n")
     
-    printer.text("\n\n\n")
-    printer.cut()
+    printer.text("\n\n")
+    printer.cut(feed=False)
 
 
 def print_bill(bill, settings_obj=None):
