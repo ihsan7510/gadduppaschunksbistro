@@ -16,6 +16,14 @@
     </header>
 
     <div class="order-layout">
+        <!-- Search Bar -->
+        <div class="px-3 pt-2">
+            <div class="input-group" style="border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow-sm);">
+                <span class="input-group-text border-end-0 text-muted" style="background: var(--bg-card); border-color: var(--border);"><i class="bi bi-search"></i></span>
+                <input type="text" id="searchInput" class="form-control border-start-0 ps-0 text-primary" style="background: var(--bg-card); border-color: var(--border); font-family: var(--font-main); height: 44px;" placeholder="Search dishes..." onkeyup="searchMenu()">
+            </div>
+        </div>
+
         <!-- Category Tabs -->
         <div class="category-tabs" id="categoryTabs">
             <button class="cat-tab active" onclick="filterCategory('all', this)">All</button>
@@ -114,15 +122,31 @@ function updateCart() {
     document.getElementById('placeOrderBtn').disabled = totalItems === 0;
 }
 
+let currentCategory = 'all';
+let searchQuery = '';
+
 function filterCategory(catId, btn) {
     document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
-    const cards = document.querySelectorAll('.menu-order-card');
-    cards.forEach(card => {
-        card.style.display = (catId === 'all' || card.dataset.cat === catId) ? '' : 'none';
-    });
+    currentCategory = catId;
     if (btn) {
         btn.classList.add('active');
     }
+    updateMenuFilter();
+}
+
+function searchMenu() {
+    searchQuery = document.getElementById('searchInput').value.toLowerCase().trim();
+    updateMenuFilter();
+}
+
+function updateMenuFilter() {
+    const cards = document.querySelectorAll('.menu-order-card');
+    cards.forEach(card => {
+        const name = card.dataset.name || '';
+        const matchesCategory = (currentCategory === 'all' || card.dataset.cat === currentCategory);
+        const matchesSearch = (name.includes(searchQuery));
+        card.style.display = (matchesCategory && matchesSearch) ? '' : 'none';
+    });
 }
 </script>
 {% endblock %}
