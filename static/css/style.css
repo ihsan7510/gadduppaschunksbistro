@@ -662,6 +662,7 @@ a:hover { color: #4a30c8; }
 
 /* Order taking screen */
 .order-layout { display: flex; flex-direction: column; gap: 16px; height: calc(100vh - 72px); overflow: hidden; }
+#orderForm { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 .category-tabs { display: flex; gap: 10px; overflow-x: auto; padding: 8px 0; flex-shrink: 0; }
 .category-tabs::-webkit-scrollbar { height: 4px; }
 .cat-tab { flex-shrink: 0; padding: 10px 20px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; color: var(--text-secondary); cursor: pointer; font-size: 0.95rem; font-weight: 700; white-space: nowrap; transition: all 0.2s; min-height: 44px; }
