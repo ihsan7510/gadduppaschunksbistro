@@ -1,6 +1,160 @@
 {% extends 'base.html' %}
 {% block title %}Order — {{ table.display_name }} — {{ settings.restaurant_name }}{% endblock %}
 
+{% block extra_css %}
+<style>
+/* Default / Desktop classes */
+.menu-order-media-container {
+  position: relative;
+}
+.menu-order-price-badge {
+  display: none;
+}
+.menu-order-action-container {
+  display: none;
+}
+.desktop-only-controls {
+  display: block;
+}
+
+/* Mobile responsive styles */
+@media (max-width: 768px) {
+  .menu-items-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 12px !important;
+    padding-bottom: 120px !important;
+  }
+  
+  .menu-order-card {
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+  
+  .menu-order-media-container {
+    position: relative !important;
+    width: 100% !important;
+    aspect-ratio: 1 / 1 !important;
+    background: #eef2ff !important;
+    border-radius: var(--radius-md) !important;
+    overflow: hidden !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  .menu-order-img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+  }
+  
+  .menu-order-img-placeholder {
+    font-size: 2rem !important;
+    background: none !important;
+    height: 100% !important;
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  .menu-order-price-badge {
+    display: inline-block !important;
+    position: absolute !important;
+    top: 8px !important;
+    right: 8px !important;
+    background: rgba(100, 116, 139, 0.4) !important;
+    backdrop-filter: blur(4px) !important;
+    color: #ffffff !important;
+    padding: 2px 8px !important;
+    border-radius: 8px !important;
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    z-index: 5 !important;
+  }
+  
+  .menu-order-action-container {
+    display: block !important;
+    position: absolute !important;
+    bottom: 8px !important;
+    right: 8px !important;
+    z-index: 10 !important;
+  }
+  
+  .qty-btn.plus-only {
+    width: 28px !important;
+    height: 28px !important;
+    border-radius: 8px !important;
+    background: #ffffff !important;
+    border: 1.5px solid var(--accent-purple, #6246ea) !important;
+    color: var(--accent-purple, #6246ea) !important;
+    font-size: 1.1rem !important;
+    font-weight: 700 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    box-shadow: var(--shadow-sm) !important;
+  }
+  
+  .qty-control-wrapper {
+    display: flex !important;
+    align-items: center !important;
+    background: #ffffff !important;
+    border: 1.5px solid var(--accent-purple, #6246ea) !important;
+    border-radius: 8px !important;
+    padding: 1px !important;
+    box-shadow: var(--shadow-sm) !important;
+  }
+  
+  .qty-btn.minus-sm, .qty-btn.plus-sm {
+    width: 24px !important;
+    height: 24px !important;
+    background: none !important;
+    border: none !important;
+    color: var(--accent-purple, #6246ea) !important;
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  .qty-display {
+    font-size: 0.85rem !important;
+    font-weight: 700 !important;
+    color: var(--text-primary) !important;
+    min-width: 16px !important;
+    text-align: center !important;
+  }
+  
+  .menu-order-info {
+    padding: 6px 0 0 0 !important;
+  }
+  
+  .menu-order-name {
+    font-size: 0.82rem !important;
+    font-weight: 600 !important;
+    line-height: 1.2 !important;
+    display: block !important;
+    white-space: normal !important;
+    color: var(--text-primary) !important;
+  }
+  
+  .veg-dot {
+    display: none !important;
+  }
+  
+  .desktop-only-controls {
+    display: none !important;
+  }
+}
+</style>
+{% endblock %}
+
 {% block body %}
 <div class="waiter-layout">
     <header class="waiter-header">
@@ -44,29 +198,44 @@
                 {% for item in cat.items.all %}
                 {% if item.is_available %}
                 <div class="menu-order-card" data-cat="{{ cat.pk }}" data-name="{{ item.name|lower }}" data-price="{{ item.price }}">
-                    {% if item.image %}
-                    <img src="{{ item.image.url }}" alt="{{ item.name }}" class="menu-order-img">
-                    {% else %}
-                    <div class="menu-order-img-placeholder">{{ cat.icon }}</div>
-                    {% endif %}
+                    <div class="menu-order-media-container">
+                        {% if item.image %}
+                        <img src="{{ item.image.url }}" alt="{{ item.name }}" class="menu-order-img">
+                        {% else %}
+                        <div class="menu-order-img-placeholder">{{ cat.icon }}</div>
+                        {% endif %}
+                        <!-- Price Badge (Shown on mobile) -->
+                        <span class="menu-order-price-badge">₹{{ item.price }}</span>
+                        <!-- Plus Action (Shown on mobile) -->
+                        <div class="menu-order-action-container">
+                            <button type="button" class="qty-btn plus-only" onclick="changeQty({{ item.pk }}, 1)" id="plus-btn-{{ item.pk }}">+</button>
+                            <div class="qty-control-wrapper" style="display: none;" id="qty-wrapper-{{ item.pk }}">
+                                <button type="button" class="qty-btn minus-sm" onclick="changeQty({{ item.pk }}, -1)">−</button>
+                                <span class="qty-display" id="qty-val-{{ item.pk }}">0</span>
+                                <button type="button" class="qty-btn plus-sm" onclick="changeQty({{ item.pk }}, 1)">+</button>
+                            </div>
+                        </div>
+                    </div>
                     <div class="menu-order-info">
                         <div class="menu-order-name">
                             <span class="veg-dot {% if item.is_veg %}veg{% else %}non-veg{% endif %}"></span>
                             {{ item.name }}
                         </div>
-                        <div class="menu-order-price">₹{{ item.price }}</div>
-                        {% if item.description %}
-                        <div class="menu-order-desc">{{ item.description|truncatechars:60 }}</div>
-                        {% endif %}
-                        <div class="menu-order-controls">
-                            <div class="qty-control">
-                                <button type="button" class="qty-btn minus" onclick="changeQty({{ item.pk }}, -1)">−</button>
-                                <input type="number" name="qty_{{ item.pk }}" id="qty_{{ item.pk }}"
-                                    value="0" min="0" max="20" class="qty-input" readonly
-                                    data-price="{{ item.price }}">
-                                <button type="button" class="qty-btn plus" onclick="changeQty({{ item.pk }}, 1)">+</button>
+                        <div class="desktop-only-controls">
+                            <div class="menu-order-price">₹{{ item.price }}</div>
+                            {% if item.description %}
+                            <div class="menu-order-desc">{{ item.description|truncatechars:60 }}</div>
+                            {% endif %}
+                            <div class="menu-order-controls">
+                                <div class="qty-control">
+                                    <button type="button" class="qty-btn minus" onclick="changeQty({{ item.pk }}, -1)">−</button>
+                                    <input type="number" name="qty_{{ item.pk }}" id="qty_{{ item.pk }}"
+                                        value="0" min="0" max="20" class="qty-input" readonly
+                                        data-price="{{ item.price }}">
+                                    <button type="button" class="qty-btn plus" onclick="changeQty({{ item.pk }}, 1)">+</button>
+                                </div>
+                                <input type="text" name="note_{{ item.pk }}" placeholder="Note..." class="item-note-input" id="note_{{ item.pk }}">
                             </div>
-                            <input type="text" name="note_{{ item.pk }}" placeholder="Note..." class="item-note-input" id="note_{{ item.pk }}">
                         </div>
                     </div>
                 </div>
@@ -107,6 +276,21 @@ function changeQty(itemId, delta) {
     // Highlight card
     const card = input.closest('.menu-order-card');
     card.classList.toggle('selected', val > 0);
+
+    // Sync mobile UI elements
+    const plusBtn = document.getElementById(`plus-btn-${itemId}`);
+    const qtyWrapper = document.getElementById(`qty-wrapper-${itemId}`);
+    const qtyDisplay = document.getElementById(`qty-val-${itemId}`);
+    if (plusBtn && qtyWrapper && qtyDisplay) {
+        qtyDisplay.textContent = val;
+        if (val > 0) {
+            plusBtn.style.setProperty('display', 'none', 'important');
+            qtyWrapper.style.setProperty('display', 'flex', 'important');
+        } else {
+            plusBtn.style.setProperty('display', 'flex', 'important');
+            qtyWrapper.style.setProperty('display', 'none', 'important');
+        }
+    }
 }
 
 function updateCart() {
