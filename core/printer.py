@@ -101,8 +101,10 @@ def format_bill_receipt(printer, bill, settings_obj=None):
     printer.text("Cash\n")
     
     # Align right for Date, Time, Invoice no
-    date_str = bill.created_at.strftime('%d/%m/%Y')
-    time_str = bill.created_at.strftime('%I:%M %p').lower()
+    from django.utils import timezone
+    local_created_at = timezone.localtime(bill.created_at)
+    date_str = local_created_at.strftime('%d/%m/%Y')
+    time_str = local_created_at.strftime('%I:%M %p').lower()
     invoice_no = str(bill.pk)
     
     printer.text(f"{'Date:':>32}\n")
@@ -235,6 +237,9 @@ def generate_receipt_text(bill, settings_obj=None):
     addr = settings_obj.address if settings_obj else "Ashokapuram"
     phone = settings_obj.phone if settings_obj else "+91 9048444991"
     
+    from django.utils import timezone
+    local_created_at = timezone.localtime(bill.created_at)
+    
     lines = [
         name.center(32),
         addr.center(32),
@@ -244,8 +249,8 @@ def generate_receipt_text(bill, settings_obj=None):
         "",
         f"{'Cash':<16}",
         f"{'Date:':>32}",
-        f"{bill.created_at.strftime('%d/%m/%Y'):>32}",
-        f"Time: {bill.created_at.strftime('%I:%M %p').lower():>26}",
+        f"{local_created_at.strftime('%d/%m/%Y'):>32}",
+        f"Time: {local_created_at.strftime('%I:%M %p').lower():>26}",
         f"Invoice no:",
         f"{bill.pk:>32}",
         "-" * 32,
