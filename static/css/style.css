@@ -701,7 +701,7 @@ a:hover { color: #4a30c8; }
 .btn-place-order:not(:disabled):hover { transform: translateY(-2px); box-shadow: var(--shadow-glow-purple); }
 
 /* Laptop & Tablet grid structure */
-@media (min-width: 769px) {
+@media (min-width: 992px) {
   #orderForm {
     display: grid;
     grid-template-columns: 1fr 340px;
@@ -899,7 +899,7 @@ a:hover { color: #4a30c8; }
 /* ===========================
    RESPONSIVE DESIGN (MOBILE & TABLET)
    =========================== */
-@media (max-width: 768px) {
+@media (max-width: 991px) {
   .waiter-header {
     padding: 0 12px;
     gap: 8px;
@@ -981,9 +981,9 @@ a:hover { color: #4a30c8; }
 }
 
 /* Mobile responsive styles */
-@media (max-width: 768px) {
+@media (max-width: 991px) {
   .menu-items-grid {
-    grid-template-columns: repeat(3, 1fr) !important;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
     gap: 12px !important;
     padding-bottom: 120px !important;
   }
